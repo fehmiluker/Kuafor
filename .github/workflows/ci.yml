@@ -27,7 +27,11 @@ jobs:
       - run: npm ci && npm run build
       # public/build is committed (hosting needs no Node.js); it must match the sources.
       - name: Committed frontend build is up to date
-        run: git diff --exit-code -- public/build || (echo "public/build güncel değil: 'npm run build' çalıştırıp commit edin." && exit 1)
+        run: |
+          if ! git diff --exit-code -- public/build; then
+            echo "public/build guncel degil - 'npm run build' calistirip commit edin."
+            exit 1
+          fi
       - run: cp .env.example .env && php artisan key:generate
       - run: vendor/bin/pint --test
       - run: php artisan test
