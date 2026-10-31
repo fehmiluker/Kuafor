@@ -1,0 +1,71 @@
+{
+  "_index-DyCCWGTH.js": {
+    "file": "assets/index-DyCCWGTH.js",
+    "name": "index",
+    "isDynamicEntry": true
+  },
+  "_internal-CYzvewIq.js": {
+    "file": "assets/internal-CYzvewIq.js",
+    "name": "internal",
+    "imports": [
+      "_index-DyCCWGTH.js"
+    ]
+  },
+  "node_modules/@fullcalendar/core/locales/tr.js": {
+    "file": "assets/tr-nWAx0x6b.js",
+    "name": "tr",
+    "src": "node_modules/@fullcalendar/core/locales/tr.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/@fullcalendar/daygrid/index.js": {
+    "file": "assets/index-BK3gTfVO.js",
+    "name": "index",
+    "src": "node_modules/@fullcalendar/daygrid/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-DyCCWGTH.js",
+      "_internal-CYzvewIq.js"
+    ]
+  },
+  "node_modules/@fullcalendar/interaction/index.js": {
+    "file": "assets/index-N3zD5vlh.js",
+    "name": "index",
+    "src": "node_modules/@fullcalendar/interaction/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-DyCCWGTH.js"
+    ]
+  },
+  "node_modules/@fullcalendar/timegrid/index.js": {
+    "file": "assets/index-C7kj7B44.js",
+    "name": "index",
+    "src": "node_modules/@fullcalendar/timegrid/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-DyCCWGTH.js",
+      "_internal-CYzvewIq.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-DN-6NiCE.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-Ddsw6uz1.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "_index-DyCCWGTH.js",
+      "node_modules/@fullcalendar/daygrid/index.js",
+      "node_modules/@fullcalendar/timegrid/index.js",
+      "node_modules/@fullcalendar/interaction/index.js",
+      "node_modules/@fullcalendar/core/locales/tr.js"
+    ]
+  }
+}
