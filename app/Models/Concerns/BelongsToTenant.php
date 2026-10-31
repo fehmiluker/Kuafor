@@ -25,7 +25,7 @@ trait BelongsToTenant
                     throw new TenantAccessDeniedException('Başka bir işletmeye kayıt oluşturulamaz.');
                 }
                 $model->tenant_id = $context->id();
-            } elseif (! $model->tenant_id) {
+            } elseif (! $model->tenant_id && ! (method_exists($model, 'allowsNullTenant') && $model->allowsNullTenant())) {
                 throw new TenantAccessDeniedException('İşletme bağlamı olmadan kayıt oluşturulamaz.');
             }
         });

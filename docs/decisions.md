@@ -42,8 +42,11 @@ Müşteriden çevrimiçi ödeme/kapora yok; `appointment_payments` yalnızca kay
 ## ADR-012 Tarih nesneleri
 `Date::use(CarbonImmutable::class)`: rezervasyon zamanlarının yanlışlıkla yerinde değiştirilmesini önler.
 
+## ADR-013 Hibrit WhatsApp numara modeli
+Kuaförlerin Meta kurulumu yapması gerçekçi değil. Varsayılan: platformun tek numarası (sıfır kurulum, ücret platformda, mesajda işletme adı). İsteğe bağlı: şubenin kendi numarası — Embedded Signup (tek tık), admin destekli kurulum veya manuel form. Platform bağlantısı tenant'sız olduğundan gelen olaylarda tenant, gönderen numarası ve bağlantıya bağlı tek kullanımlık token'dan çözülür. Bu, ilk talimattaki "her şube kendi numarasından" kuralını varsayılan olmaktan çıkarır; ürün sahibinin kararıdır (C seçeneği).
+
 ## Açık konular / sonraki adımlar
-1. **Meta Embedded Signup** JS akışı ve sunucu tarafı `code → token` değişimi (şu an bilgiler form/API ile giriliyor). Şablonların Meta'ya gönderimi ve onay durumunun senkronizasyonu.
+1. Şablonların Meta'ya API ile gönderimi ve onay durumunun otomatik senkronizasyonu (şu an seeder + elle güncelleme). Embedded Signup canlı Meta hesabıyla henüz denenmedi (sandbox ile test edildi).
 2. Gerçek SMS (Netgsm/İleti Merkezi vb.) ve abonelik ödeme sağlayıcısı (iyzico/PayTR) adaptörleri — arayüzler hazır.
 3. WhatsApp Flows ile zengin tarih/saat seçici (şu an liste mesajı + web linki).
 4. KVKK metinleri, VDS ve İYS süreçlerinin hukukçu tarafından tamamlanması; veri silme taleplerinin otomatik anonimleştirme işi.

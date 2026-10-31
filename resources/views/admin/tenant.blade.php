@@ -42,6 +42,24 @@
         @endif
     </section>
 </div>
+<section class="card mt-6 p-5" aria-labelledby="bw-h"><h2 id="bw-h" class="font-semibold">Şube WhatsApp numaraları (destek ekibi kurulumu)</h2>
+    <p class="text-sm text-slate-600">Salon kendi numarasını bağlayamıyorsa, Meta'da onun adına oluşturduğunuz bilgileri burada girebilirsiniz. Boş bırakılan şubeler platform numarasını kullanır.</p>
+    @foreach($branches as $b)
+        @php $c = $connections[$b->id] ?? null; @endphp
+        <div class="mt-4 border-t border-slate-100 pt-3">
+            <p class="text-sm font-medium">{{ $b->name }} — {{ $c && $c->status->value === 'connected' ? 'Kendi numarası: '.$c->display_phone.' ('.$c->onboarding_method.')' : 'Platform numarası' }}</p>
+            @if($canManage)
+                <form method="POST" action="{{ route('admin.tenants.whatsapp', [$tenant->id, $b->id]) }}" class="mt-2 grid gap-2 sm:grid-cols-5">@csrf
+                    <input name="waba_id" class="input" placeholder="WABA ID" required aria-label="WABA ID">
+                    <input name="phone_number_id" class="input" placeholder="Phone number ID" required aria-label="Phone number ID">
+                    <input name="access_token" type="password" class="input" placeholder="Erişim anahtarı" required autocomplete="off" aria-label="Erişim anahtarı">
+                    <input name="reason" class="input" placeholder="Gerekçe (ör. destek talebi #)" required aria-label="Gerekçe">
+                    <button class="btn-secondary">Bağla</button>
+                </form>
+            @endif
+        </div>
+    @endforeach
+</section>
 <section class="card mt-6 p-5"><h2 class="font-semibold">Denetim kaydı</h2>
     <ul class="mt-2 text-sm">@forelse($audit as $l)<li class="border-b border-slate-100 py-1">{{ $l->created_at->format('d.m.Y H:i') }} · {{ $l->action }} · {{ $l->actor_type }}#{{ $l->actor_id }} @if($l->reason)— {{ $l->reason }}@endif</li>@empty<li class="text-slate-500">Kayıt yok.</li>@endforelse</ul>
 </section>

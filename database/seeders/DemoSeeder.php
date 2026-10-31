@@ -80,6 +80,13 @@ class DemoSeeder extends Seeder
             'connected_at' => now(), 'webhook_subscribed' => true,
         ]);
 
+        // Platform number (sandbox): every salon without its own number sends from here.
+        WhatsAppConnection::withoutGlobalScopes()->create([
+            'tenant_id' => null, 'branch_id' => null, 'is_platform' => true, 'onboarding_method' => 'platform',
+            'waba_id' => '100000000000099', 'phone_number_id' => '200000000000099', 'display_phone' => '+908501112233',
+            'encrypted_credential_reference' => 'sandbox-platform-token', 'status' => 'connected', 'connected_at' => now(), 'webhook_subscribed' => true,
+        ]);
+
         // 2) Profesyonel, automatic approval, Ankara
         $owner2 = $this->user('Mert Aksoy', 'sahip@modaberber.test', '+905321110010');
         $b2 = SalonBuilder::make()->tenant('Moda Berber', Plan::with('features')->where('slug', 'profesyonel')->first(), $owner2, ['description' => 'Klasik ve modern erkek kuaförlüğü.']);

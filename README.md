@@ -57,9 +57,9 @@ vendor/bin/pint --test
 | Unit | 16 | 40 |
 | Feature | 75 | 406 |
 | Security | 21 | 84 |
-| Integration (WhatsApp) | 17 | 92 |
+| Integration (WhatsApp) | 28 | 142 |
 | Concurrency (fork + MySQL) | 5 | 14 |
-| **Toplam** | **134 geçti, 0 hata** | **634** |
+| **Toplam** | **145 geçti, 0 hata** | **684** |
 
 Ayrıca: Pint temiz, `npm run build` başarılı, Playwright ile mobil tarayıcıda uçtan uca rezervasyon akışı ve masaüstünde panel/takvim manuel doğrulandı, şifreli yedek → geri yükleme turu yerel MySQL'de çalıştırıldı. Ayrıntı: [docs/test-plan.md](docs/test-plan.md).
 
@@ -81,7 +81,7 @@ Dağıtım dosyaları: `deploy/` (nginx, supervisor, systemd, backup/restore/dep
 ## Sağlayıcı sınırları (mock ↔ canlı)
 | Entegrasyon | Bu teslimatta | Canlı için |
 |---|---|---|
-| WhatsApp | `fake` modu: gerçek mesaj yok; tüm akışlar testli | Meta işletme doğrulaması, App Review, numara kaydı, şablon onayı, `WHATSAPP_PROVIDER_MODE=meta` — [checklist](docs/whatsapp.md#canlıya-alma-kontrol-listesi) |
+| WhatsApp | Hibrit: platform numarası (varsayılan, salon ayar yapmaz) + isteğe bağlı kendi numarası ("WhatsApp'ı bağla"). `fake` modu: gerçek mesaj yok; tüm akışlar testli | Meta işletme doğrulaması, App Review, numara kaydı, şablon onayı, `WHATSAPP_PROVIDER_MODE=meta` — [checklist](docs/whatsapp.md#canlıya-alma-kontrol-listesi) |
 | SMS (OTP) | `log` sağlayıcı | `SmsProviderInterface` için sağlayıcı adaptörü |
 | E-posta | `log`/SMTP | SMTP bilgileri |
 | Abonelik tahsilatı | `manual` (yönetici aktivasyonu + imzalı webhook), otomatik kart tahsilatı **yok** | `PaymentGatewayInterface` için iyzico/PayTR vb. adaptör |

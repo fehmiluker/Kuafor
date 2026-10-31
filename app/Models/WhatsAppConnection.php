@@ -16,13 +16,26 @@ class WhatsAppConnection extends Model
     protected $guarded = ['id'];
 
     // The credential never leaves the server: hidden from every serialization.
-    protected $hidden = ['encrypted_credential_reference'];
+    protected $hidden = ['encrypted_credential_reference', 'encrypted_pin'];
+
+    /** The platform connection has no tenant. */
+    public function allowsNullTenant(): bool
+    {
+        return (bool) $this->is_platform;
+    }
+
+    public static function platform(): ?self
+    {
+        return static::withoutGlobalScopes()->where('is_platform', true)->latest('id')->first();
+    }
 
     protected function casts(): array
     {
         return [
             'status' => WhatsAppConnectionStatus::class,
             'encrypted_credential_reference' => 'encrypted',
+            'encrypted_pin' => 'encrypted',
+            'is_platform' => 'boolean',
             'permissions' => 'array',
             'metadata' => 'array',
             'webhook_subscribed' => 'boolean',

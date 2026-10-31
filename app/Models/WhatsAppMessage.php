@@ -15,6 +15,13 @@ class WhatsAppMessage extends Model
 
     protected $guarded = ['id'];
 
+    /** Inbound messages on the platform number can arrive before their tenant is known. */
+    public function allowsNullTenant(): bool
+    {
+        return $this->connection_id !== null
+            && (bool) WhatsAppConnection::withoutGlobalScopes()->whereKey($this->connection_id)->value('is_platform');
+    }
+
     protected function casts(): array
     {
         return [

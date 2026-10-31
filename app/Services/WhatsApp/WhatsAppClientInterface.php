@@ -26,4 +26,10 @@ interface WhatsAppClientInterface
 
     /** Subscribe our app to the WABA's webhooks. */
     public function subscribeWebhooks(WhatsAppConnection $connection): bool;
+
+    /** Embedded Signup: exchange the short-lived code for a business integration token. */
+    public function exchangeCode(string $code): string;
+
+    /** Register the number on the Cloud API (sets the two-step verification PIN). */
+    public function registerPhoneNumber(WhatsAppConnection $connection, string $pin): bool;
 }

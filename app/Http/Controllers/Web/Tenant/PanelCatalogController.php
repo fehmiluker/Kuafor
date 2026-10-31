@@ -115,7 +115,14 @@ class PanelCatalogController extends PanelBaseController
 
         return view('tenant.branches.whatsapp', [
             'branch' => $branch, 'connection' => WhatsAppConnection::where('branch_id', $branch->id)->first(),
-            'messages' => WhatsAppMessage::where('branch_id', $branch->id)->latest()->limit(20)->get(),
+            'sender' => app(ConnectionService::class)->senderFor($this->tenant(), $branch),
+            'embedded' => [
+                'mode' => config('whatsapp.mode'),
+                'app_id' => config('whatsapp.app_id'),
+                'config_id' => config('whatsapp.embedded_signup_config_id'),
+                'graph_version' => config('whatsapp.graph_version'),
+            ],
+            'messages' => WhatsAppMessage::where('branch_id', $branch->id)->with(['connection' => fn ($q) => $q->withoutGlobalScopes()])->latest()->limit(20)->get(),
             'managerNumbers' => (array) (app(SettingsRepository::class)->branch($branch)['whatsapp_manager_numbers'] ?? []),
         ]);
     }
@@ -130,6 +137,23 @@ class PanelCatalogController extends PanelBaseController
         $connections->connect($branch, $d['waba_id'], $d['phone_number_id'], $d['access_token'], $d['display_phone'] ?? null);
 
         return back()->with('status', 'WhatsApp numarası bağlandı.');
+    }
+
+    /** Embedded Signup callback from the browser (FB.login code + waba/phone ids from Meta's popup). */
+    public function whatsappEmbedded(Request $request, Branch $branch, ConnectionService $connections)
+    {
+        $this->authorize('manageWhatsApp', $branch);
+        $d = $request->validate([
+            'code' => ['required', 'string', 'max:2000'],
+            'waba_id' => ['required', 'regex:/^\d{5,30}$/'],
+            'phone_number_id' => ['required', 'regex:/^\d{5,30}$/'],
+        ]);
+        $c = $connections->connectViaEmbeddedSignup($branch, $d['code'], $d['waba_id'], $d['phone_number_id']);
+        $message = 'WhatsApp numaranız bağlandı ('.($c->display_phone ?? $c->phone_number_id).'). Bildirimler artık kendi numaranızdan gidecek.';
+
+        return $request->expectsJson()
+            ? response()->json(['ok' => true, 'message' => $message])
+            : back()->with('status', $message);
     }
 
     public function whatsappDisconnect(Branch $branch, ConnectionService $connections): RedirectResponse

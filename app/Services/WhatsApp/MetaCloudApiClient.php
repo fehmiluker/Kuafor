@@ -64,6 +64,36 @@ final class MetaCloudApiClient implements WhatsAppClientInterface
         return $this->http($connection)->post($this->url($connection->waba_id.'/subscribed_apps'))->successful();
     }
 
+    public function exchangeCode(string $code): string
+    {
+        try {
+            $response = Http::acceptJson()->timeout((int) config('whatsapp.timeout_seconds'))
+                ->get($this->url('oauth/access_token'), [
+                    'client_id' => config('whatsapp.app_id'),
+                    'client_secret' => config('whatsapp.app_secret'),
+                    'code' => $code,
+                ]);
+        } catch (ConnectionException) {
+            throw new WhatsAppException('Meta yanıt vermedi.', 'timeout');
+        }
+        $token = $response->json('access_token');
+        if ($response->failed() || ! is_string($token) || $token === '') {
+            throw new WhatsAppException('Meta bağlantı kodu doğrulanamadı.', (string) ($response->json('error.code') ?? 'http_'.$response->status()), $response->status());
+        }
+
+        return $token;
+    }
+
+    public function registerPhoneNumber(WhatsAppConnection $connection, string $pin): bool
+    {
+        $response = $this->http($connection)->post($this->url($connection->phone_number_id.'/register'), [
+            'messaging_product' => 'whatsapp', 'pin' => $pin,
+        ]);
+
+        // Already-registered numbers return an error that is safe to ignore.
+        return $response->successful() || (string) $response->json('error.code') === '133005';
+    }
+
     private function send(WhatsAppConnection $connection, array $payload): SendResult
     {
         if (! $connection->isUsable()) {

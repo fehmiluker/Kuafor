@@ -8,16 +8,19 @@ use App\Enums\SubscriptionStatus;
 use App\Enums\TenantStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Branch;
 use App\Models\Plan;
 use App\Models\Review;
 use App\Models\ReviewReport;
 use App\Models\Subscription;
 use App\Models\Tenant;
 use App\Models\WhatsAppConnection;
+use App\Rules\Phone;
 use App\Services\Admin\PlatformMetrics;
 use App\Services\Audit\AuditLogger;
 use App\Services\Billing\SubscriptionService;
 use App\Services\Reviews\ModerationService;
+use App\Services\WhatsApp\ConnectionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +61,8 @@ class AdminPanelController extends Controller
 
         return view('admin.tenant', [
             'tenant' => $tenant, 'plans' => Plan::orderBy('sort_order')->get(),
+            'branches' => Branch::withoutGlobalScopes()->where('tenant_id', $tenant->id)->orderBy('name')->get(),
+            'connections' => WhatsAppConnection::withoutGlobalScopes()->where('tenant_id', $tenant->id)->get()->keyBy('branch_id'),
             'audit' => AuditLog::where('tenant_id', $tenant->id)->latest('id')->limit(20)->get(),
             'appointments30d' => DB::table('appointments')->where('tenant_id', $tenant->id)->where('created_at', '>=', now()->subDays(30))->count(),
             'canManage' => $request->user()->hasPlatformPermission('tenants.manage'),
@@ -164,11 +169,52 @@ class AdminPanelController extends Controller
         return view('admin.audit', compact('logs'));
     }
 
+    /** Platform-wide default sender number (used by every salon without its own). */
+    public function connectPlatformWhatsApp(Request $request, ConnectionService $connections): RedirectResponse
+    {
+        $this->need($request, 'platform.settings');
+        $d = $request->validate([
+            'waba_id' => ['required', 'regex:/^\d{5,30}$/'], 'phone_number_id' => ['required', 'regex:/^\d{5,30}$/'],
+            'access_token' => ['required', 'string', 'min:20', 'max:2000'], 'display_phone' => ['nullable', new Phone],
+        ]);
+        $connections->connectPlatform($d['waba_id'], $d['phone_number_id'], $d['access_token'], $d['display_phone'] ?? null);
+
+        return back()->with('status', 'Platform WhatsApp numarası bağlandı. Kendi numarası olmayan tüm salonlar bu numaradan bildirim gönderecek.');
+    }
+
+    public function disconnectPlatformWhatsApp(Request $request, ConnectionService $connections): RedirectResponse
+    {
+        $this->need($request, 'platform.settings');
+        $platform = WhatsAppConnection::platform() ?? abort(404);
+        $connections->disconnect($platform, 'admin');
+
+        return back()->with('status', 'Platform numarası devre dışı bırakıldı.');
+    }
+
+    /** Admin-assisted setup: connect a salon branch's own number on its behalf. */
+    public function connectBranchWhatsApp(Request $request, Tenant $tenant, int $branch, ConnectionService $connections): RedirectResponse
+    {
+        $this->need($request, 'tenants.manage');
+        $d = $request->validate([
+            'waba_id' => ['required', 'regex:/^\d{5,30}$/'], 'phone_number_id' => ['required', 'regex:/^\d{5,30}$/'],
+            'access_token' => ['required', 'string', 'min:20', 'max:2000'], 'display_phone' => ['nullable', new Phone],
+            'reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+        $b = Branch::withoutGlobalScopes()->where('tenant_id', $tenant->id)->findOrFail($branch);
+        $b->setRelation('tenant', $tenant);
+        $c = $connections->connect($b, $d['waba_id'], $d['phone_number_id'], $d['access_token'], $d['display_phone'] ?? null, 'admin');
+        $this->audit->log('admin.branch_whatsapp_connected', $c, [], ['branch_id' => $b->id], $d['reason'], tenantId: $tenant->id);
+
+        return back()->with('status', $b->name.' şubesinin numarası bağlandı.');
+    }
+
     public function system(Request $request): View
     {
         $this->need($request, 'tenants.view');
 
         return view('admin.system', [
+            'platform' => WhatsAppConnection::platform(),
+            'canManage' => $request->user()->hasPlatformPermission('platform.settings'),
             'mode' => config('whatsapp.mode'),
             'connections' => WhatsAppConnection::withoutGlobalScopes()->get()->groupBy(fn ($c) => $c->status->value)->map->count(),
             'webhooks' => DB::table('whatsapp_webhook_events')->where('received_at', '>=', now()->subDay())->groupBy('status')->selectRaw('status, COUNT(*) c')->pluck('c', 'status'),

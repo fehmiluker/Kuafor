@@ -22,6 +22,7 @@ use App\Services\Booking\ActionTokenService;
 use App\Services\Booking\BookingSettings;
 use App\Services\Booking\GuestTokenService;
 use App\Services\Settings\SettingsRepository;
+use App\Services\WhatsApp\ConnectionService;
 use App\Services\WhatsApp\TemplateCatalog;
 use App\Services\WhatsApp\WhatsAppSender;
 use App\Support\LocalTime;
@@ -113,8 +114,9 @@ final class NotificationDispatcher
         $until = LocalTime::format($p->expires_at_utc, $ctx['tz'], 'd F H:i');
         $customerPhone = $ctx['customer']->phone_e164;
         $ttl = (int) max(1, now()->diffInMinutes($p->expires_at_utc));
-        $accept = 'a:'.$this->actionTokens->issue($a, ActionToken::CUSTOMER_ACCEPT, 'customer', $customerPhone, [], $p->id, $ttl);
-        $reject = 'a:'.$this->actionTokens->issue($a, ActionToken::CUSTOMER_REJECT, 'customer', $customerPhone, [], $p->id, $ttl);
+        $via = ['connection_id' => $this->usableConnection($ctx)?->id];
+        $accept = 'a:'.$this->actionTokens->issue($a, ActionToken::CUSTOMER_ACCEPT, 'customer', $customerPhone, $via, $p->id, $ttl);
+        $reject = 'a:'.$this->actionTokens->issue($a, ActionToken::CUSTOMER_REJECT, 'customer', $customerPhone, $via, $p->id, $ttl);
         $link = $plainProposalToken ? route('proposal.show', ['proposal' => $p->id, 'token' => $plainProposalToken]) : $this->manageUrl($a);
 
         $sent = $this->toCustomer($ctx, 'proposal_offer', [$ctx['first_name'], $ctx['salon'], $newWhen, $until], 'Size yeni bir saat önerildi',
@@ -211,8 +213,9 @@ final class NotificationDispatcher
         if ($connection) {
             $ttl = BookingSettings::for($ctx['tenant'], $ctx['branch'])->pendingTtlMinutes;
             foreach ($this->managerNumbers($ctx['branch'], $connection) as $phone) {
-                $approve = 'a:'.$this->actionTokens->issue($a, ActionToken::SALON_APPROVE, 'salon', $phone, [], null, $ttl);
-                $propose = 'a:'.$this->actionTokens->issue($a, ActionToken::SALON_PROPOSE, 'salon', $phone, [], null, $ttl);
+                $via = ['connection_id' => $connection->id];
+                $approve = 'a:'.$this->actionTokens->issue($a, ActionToken::SALON_APPROVE, 'salon', $phone, $via, null, $ttl);
+                $propose = 'a:'.$this->actionTokens->issue($a, ActionToken::SALON_PROPOSE, 'salon', $phone, $via, null, $ttl);
                 $sentWhatsApp = (bool) $this->whatsapp->queueTemplate($connection, $a, new OutboundMessage('salon_new_request', $phone, $params, [$approve, $propose],
                     dedupeKey: 'wa:salon_new_request:'.$a->id.':v'.$a->version.':'.PhoneNumber::hash($phone))) || $sentWhatsApp;
             }
@@ -289,14 +292,10 @@ final class NotificationDispatcher
 
     // ---------------------------------------------------------------- lookups
 
+    /** Branch's own number if connected, otherwise the platform number (hybrid model). */
     private function usableConnection(array $ctx): ?WhatsAppConnection
     {
-        if (! $this->entitlements->hasFeature($ctx['tenant'], 'whatsapp')) {
-            return null;
-        }
-        $connection = WhatsAppConnection::withoutGlobalScopes()->where('branch_id', $ctx['branch']->id)->first();
-
-        return $connection?->isUsable() ? $connection : null;
+        return app(ConnectionService::class)->senderFor($ctx['tenant'], $ctx['branch']);
     }
 
     /**
@@ -336,7 +335,8 @@ final class NotificationDispatcher
             'appointment' => $a, 'tenant' => $tenant, 'branch' => $branch, 'customer' => $customer, 'tz' => $tz,
             'first_name' => explode(' ', trim($customer->full_name))[0] ?: 'Müşterimiz',
             'salon' => $tenant->name.($branch->name ? ' ('.$branch->name.')' : ''),
-            'branch_name' => $branch->name,
+            // Shared platform number: salon-facing messages always name the business, not only the branch.
+            'branch_name' => $tenant->name.' – '.$branch->name,
             'when' => LocalTime::format($a->starts_at_utc, $tz, 'd F l H:i'),
             'services' => $items->implode(', '),
             'ref' => $a->public_reference,

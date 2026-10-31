@@ -37,6 +37,19 @@ class WhatsAppController extends TenantApiController
         return ApiResponse::ok($this->present($c));
     }
 
+    /** Embedded Signup: exchange the code server-side and register the number. */
+    public function embeddedSignup(Request $request, Branch $branch, ConnectionService $connections): JsonResponse
+    {
+        $this->authorize('manageWhatsApp', $branch);
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:2000'],
+            'waba_id' => ['required', 'string', 'regex:/^\d{5,30}$/'],
+            'phone_number_id' => ['required', 'string', 'regex:/^\d{5,30}$/'],
+        ]);
+
+        return ApiResponse::ok($this->present($connections->connectViaEmbeddedSignup($branch, $data['code'], $data['waba_id'], $data['phone_number_id'])));
+    }
+
     public function disconnect(Branch $branch, ConnectionService $connections): JsonResponse
     {
         $this->authorize('manageWhatsApp', $branch);
@@ -50,8 +63,10 @@ class WhatsAppController extends TenantApiController
     {
         $this->authorize('manageWhatsApp', $branch);
         $c = WhatsAppConnection::where('branch_id', $branch->id)->first();
+        $sender = $connections->senderFor($this->tenant(), $branch);
+        $payload = $c ? $this->present($connections->check($c)) : ['status' => 'not_connected'];
 
-        return ApiResponse::ok($c ? $this->present($connections->check($c)) : ['status' => 'not_connected']);
+        return ApiResponse::ok($payload + ['sends_via' => $sender ? ($sender->is_platform ? 'platform' : 'own') : 'none', 'sender_phone' => $sender?->display_phone]);
     }
 
     /** Never returns the credential. */
@@ -60,7 +75,7 @@ class WhatsAppController extends TenantApiController
         return [
             'branch_id' => $c->branch_id, 'status' => $c->status->value, 'status_label' => $c->status->label(),
             'display_phone' => $c->display_phone, 'waba_id' => $c->waba_id, 'phone_number_id' => $c->phone_number_id,
-            'webhook_subscribed' => $c->webhook_subscribed, 'connected_at' => $c->connected_at?->toIso8601ZuluString(),
+            'webhook_subscribed' => $c->webhook_subscribed, 'onboarding_method' => $c->onboarding_method, 'connected_at' => $c->connected_at?->toIso8601ZuluString(),
             'last_health_check_at' => $c->last_health_check_at?->toIso8601ZuluString(), 'last_error' => $c->last_error,
             'mode' => config('whatsapp.mode'),
         ];

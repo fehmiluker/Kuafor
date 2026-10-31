@@ -96,6 +96,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             Route::middleware('feature:whatsapp')->group(function () {
                 Route::get('whatsapp/connections', [WhatsAppController::class, 'index'])->name('whatsapp.index');
                 Route::post('branches/{branch}/whatsapp/connect', [WhatsAppController::class, 'connect'])->name('whatsapp.connect');
+                Route::post('branches/{branch}/whatsapp/embedded-signup', [WhatsAppController::class, 'embeddedSignup'])->name('whatsapp.embedded');
                 Route::post('branches/{branch}/whatsapp/disconnect', [WhatsAppController::class, 'disconnect'])->name('whatsapp.disconnect');
                 Route::get('branches/{branch}/whatsapp/status', [WhatsAppController::class, 'status'])->name('whatsapp.status');
             });

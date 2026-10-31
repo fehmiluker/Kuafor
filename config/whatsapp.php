@@ -12,6 +12,13 @@ return [
     'verify_token' => env('META_VERIFY_TOKEN'),
     'timeout_seconds' => 10,
 
+    // Embedded Signup ("WhatsApp'ı bağla" button): configuration id from Meta App Dashboard
+    // (Facebook Login for Business -> Configurations, WhatsApp Embedded Signup).
+    'embedded_signup_config_id' => env('META_EMBEDDED_SIGNUP_CONFIG_ID'),
+
+    // When a branch has no number of its own, send through the platform number.
+    'platform_fallback' => env('WHATSAPP_PLATFORM_FALLBACK', true),
+
     // Free-form (non-template) messages are allowed only within this window after
     // the user's last inbound message (Meta customer service window).
     'service_window_hours' => 24,

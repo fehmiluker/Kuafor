@@ -94,6 +94,7 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::delete('subeler/{branch}/kapali-zaman/{blocked}', [PanelCatalogController::class, 'removeBlockedTime'])->whereNumber('blocked')->name('branches.blocked.destroy');
         Route::get('subeler/{branch}/whatsapp', [PanelCatalogController::class, 'whatsapp'])->middleware('feature:whatsapp')->name('branches.whatsapp');
         Route::post('subeler/{branch}/whatsapp', [PanelCatalogController::class, 'whatsappConnect'])->middleware('feature:whatsapp')->name('branches.whatsapp.connect');
+        Route::post('subeler/{branch}/whatsapp/embedded', [PanelCatalogController::class, 'whatsappEmbedded'])->middleware('feature:whatsapp')->name('branches.whatsapp.embedded');
         Route::delete('subeler/{branch}/whatsapp', [PanelCatalogController::class, 'whatsappDisconnect'])->middleware('feature:whatsapp')->name('branches.whatsapp.disconnect');
 
         Route::get('personel', [PanelCatalogController::class, 'employees'])->name('employees.index');
@@ -141,5 +142,8 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::post('moderasyon/{review}', [AdminPanelController::class, 'moderate'])->whereNumber('review')->name('moderate');
         Route::get('denetim', [AdminPanelController::class, 'audit'])->name('audit');
         Route::get('sistem', [AdminPanelController::class, 'system'])->name('system');
+        Route::post('sistem/whatsapp', [AdminPanelController::class, 'connectPlatformWhatsApp'])->name('whatsapp.platform');
+        Route::delete('sistem/whatsapp', [AdminPanelController::class, 'disconnectPlatformWhatsApp'])->name('whatsapp.platform.disconnect');
+        Route::post('isletmeler/{tenant:id}/subeler/{branch}/whatsapp', [AdminPanelController::class, 'connectBranchWhatsApp'])->whereNumber('branch')->name('tenants.whatsapp');
     });
 });

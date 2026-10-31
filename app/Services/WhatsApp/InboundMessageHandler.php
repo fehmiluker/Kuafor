@@ -55,14 +55,32 @@ final class InboundMessageHandler
         if (! $connection) {
             return;
         }
-        $tenant = Tenant::findOrFail($connection->tenant_id);
-        $this->context->run($tenant, function () use ($data, $connection) {
-            match ($data['kind'] ?? null) {
-                'status' => $this->applyStatus($connection, $data['data']),
-                'message' => $this->applyMessage($connection, $data['data']),
-                default => null,
-            };
-        });
+        $kind = $data['kind'] ?? null;
+        // Branch number: the tenant is the connection's. Platform number: shared by all
+        // tenants, so the tenant is resolved per event (message row / action token).
+        $tenantId = $connection->tenant_id ?? match ($kind) {
+            'status' => WhatsAppMessage::withoutGlobalScopes()->where('connection_id', $connection->id)
+                ->where('provider_message_id', $data['data']['id'] ?? '')->value('tenant_id'),
+            'message' => $this->tenantFromPayload($data['data']),
+            default => null,
+        };
+        $apply = fn () => match ($kind) {
+            'status' => $this->applyStatus($connection, $data['data']),
+            'message' => $this->applyMessage($connection, $data['data'], $tenantId),
+            default => null,
+        };
+        $tenant = $tenantId ? Tenant::find($tenantId) : null;
+        $tenant ? $this->context->run($tenant, $apply) : $this->context->asPlatform($apply);
+    }
+
+    private function tenantFromPayload(array $m): ?int
+    {
+        $payload = $m['button']['payload'] ?? $m['interactive']['button_reply']['id'] ?? $m['interactive']['list_reply']['id'] ?? null;
+        if (! is_string($payload) || ! str_starts_with($payload, 'a:')) {
+            return null;
+        }
+
+        return $this->tokens->peek(substr($payload, 2))?->tenant_id;
     }
 
     private function applyStatus(WhatsAppConnection $connection, array $s): void
@@ -93,7 +111,7 @@ final class InboundMessageHandler
         }
     }
 
-    private function applyMessage(WhatsAppConnection $connection, array $m): void
+    private function applyMessage(WhatsAppConnection $connection, array $m, ?int $tenantId): void
     {
         $from = PhoneNumber::fromWaId((string) ($m['from'] ?? ''));
         if (! $from) {
@@ -102,7 +120,7 @@ final class InboundMessageHandler
         // Record inbound (opens the 24h service window). Unique wamid makes replays harmless.
         try {
             WhatsAppMessage::withoutGlobalScopes()->create([
-                'tenant_id' => $connection->tenant_id, 'branch_id' => $connection->branch_id, 'connection_id' => $connection->id,
+                'tenant_id' => $tenantId, 'branch_id' => $connection->branch_id, 'connection_id' => $connection->id,
                 'recipient_e164' => $from, 'direction' => 'inbound', 'provider_message_id' => $m['id'] ?? null,
                 'idempotency_key' => 'in:'.($m['id'] ?? bin2hex(random_bytes(8))), 'message_type' => (string) ($m['type'] ?? 'unknown'),
                 'status' => MessageStatus::Received, 'payload_redacted' => ['type' => $m['type'] ?? null],
@@ -120,7 +138,11 @@ final class InboundMessageHandler
         }
         $plain = substr($payload, 2);
         $peek = $this->tokens->peek($plain);
-        if (! $peek || $peek->tenant_id !== $connection->tenant_id) {
+        // Token must belong to the tenant this connection serves (platform: any tenant) and,
+        // when bound, must have been sent over this very connection.
+        $boundTo = $peek?->payload['connection_id'] ?? null;
+        if (! $peek || ($connection->tenant_id !== null && $peek->tenant_id !== $connection->tenant_id)
+            || ($boundTo !== null && (int) $boundTo !== $connection->id)) {
             $this->reply($connection, $from, 'Bu işlem bağlantısı geçersiz veya süresi dolmuş.');
 
             return;
@@ -131,7 +153,7 @@ final class InboundMessageHandler
 
             return;
         }
-        $appointment = Appointment::withoutGlobalScopes()->where('tenant_id', $connection->tenant_id)->find($token->appointment_id);
+        $appointment = Appointment::withoutGlobalScopes()->where('tenant_id', $token->tenant_id)->find($token->appointment_id);
         if (! $appointment) {
             return;
         }
@@ -183,7 +205,7 @@ final class InboundMessageHandler
                     continue;
                 }
                 $employeeId = in_array($a->employee_id, $slot['employee_ids'], true) ? $a->employee_id : $slot['employee_ids'][0];
-                $token = $this->tokens->issue($a, ActionToken::SALON_PROPOSE_SLOT, 'salon', $from, ['start' => $slot['start']->toIso8601String(), 'employee_id' => $employeeId]);
+                $token = $this->tokens->issue($a, ActionToken::SALON_PROPOSE_SLOT, 'salon', $from, ['start' => $slot['start']->toIso8601String(), 'employee_id' => $employeeId, 'connection_id' => $c->id]);
                 $local = LocalTime::toLocal($slot['start'], $branch->timezone);
                 $rows[] = ['id' => 'a:'.$token, 'title' => mb_substr($local->locale('tr')->translatedFormat('d M D H:i'), 0, 24),
                     'description' => mb_substr((string) Employee::withoutGlobalScopes()->whereKey($employeeId)->value('display_name'), 0, 72)];

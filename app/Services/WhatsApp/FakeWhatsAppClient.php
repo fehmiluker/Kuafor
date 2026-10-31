@@ -47,6 +47,20 @@ final class FakeWhatsAppClient implements WhatsAppClientInterface
         return true;
     }
 
+    public function exchangeCode(string $code): string
+    {
+        if ($code === 'invalid') {
+            throw new WhatsAppException('Meta bağlantı kodu doğrulanamadı.', '100', 400);
+        }
+
+        return 'sandbox-es-token-'.substr(hash('sha256', $code), 0, 32);
+    }
+
+    public function registerPhoneNumber(WhatsAppConnection $connection, string $pin): bool
+    {
+        return true;
+    }
+
     private function record(WhatsAppConnection $connection, string $type, string $to, array $payload): SendResult
     {
         if ($this->failNext !== []) {

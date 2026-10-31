@@ -177,8 +177,9 @@ Değişiklik talebi salona panel bildirimi olarak düşer: `{"preferred_date":"2
 | `POST /tenant/subscription/change-plan` | `{"plan":"premium","interval":"monthly|yearly"}`; yükseltme anında, düşürme dönem sonunda |
 | `GET /tenant/whatsapp/connections` | Kimlik bilgisi asla dönmez |
 | `POST /tenant/branches/{branch}/whatsapp/connect` | `{"waba_id","phone_number_id","access_token","display_phone?"}` → canlı sağlık kontrolü sonrası `connected` |
-| `POST /tenant/branches/{branch}/whatsapp/disconnect` | Token silinir |
-| `GET /tenant/branches/{branch}/whatsapp/status` | Anlık sağlık kontrolü |
+| `POST /tenant/branches/{branch}/whatsapp/embedded-signup` | `{"code","waba_id","phone_number_id"}` (Meta Embedded Signup çıktısı) → kod sunucuda token'a çevrilir, numara kaydedilir. Hatalar: `embedded_signup_failed`, `register_failed`, `number_in_use`, `feature_unavailable` |
+| `POST /tenant/branches/{branch}/whatsapp/disconnect` | Token silinir; bildirimler platform numarasına döner |
+| `GET /tenant/branches/{branch}/whatsapp/status` | Anlık sağlık kontrolü + `sends_via` (`own` \| `platform` \| `none`), `sender_phone` |
 | `GET /tenant/reviews` · `POST /tenant/reviews/{id}/reply {"body"}` · `POST /tenant/reviews/{id}/report {"reason" ≥10}` | Silme ucu yoktur |
 
 ## Süper admin (`platform` yetenekli token)
