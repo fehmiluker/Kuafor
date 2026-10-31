@@ -11,12 +11,14 @@
 | Yetki | Spatie Permission (teams = tenant) + Policy + sorgu kapsamı |
 | WhatsApp | Resmî Meta Cloud API adaptörü + sandbox (fake) modu |
 
+> **Online demo (cPanel):** [docs/cpanel-kurulum.md](docs/cpanel-kurulum.md) — `bash deploy/cpanel/install.sh`, sonra `php artisan kuafor:check --demo`.
+
 ## Hızlı başlangıç
 ```bash
 composer install
 cp .env.example .env && php artisan key:generate   # DB_* ayarlarını girin (MySQL 8)
 php artisan migrate --seed                          # referans + demo veri
-npm ci && npm run build
+npm ci && npm run build      # yalnızca CSS/JS değiştiyse (derlenmiş hali public/build içinde depoda)
 php artisan storage:link
 composer dev                                        # http://localhost:8000
 ```
@@ -72,7 +74,8 @@ Ayrıca: Pint temiz, `npm run build` başarılı, Playwright ile mobil tarayıc�
 | [api.md](docs/api.md) | Uçlar, örnekler, hata kodları, yetki matrisi |
 | [whatsapp.md](docs/whatsapp.md) | Meta Cloud API akışları, güvenlik, canlıya alma listesi |
 | [security.md](docs/security.md) | RBAC, uygulama güvenliği, KVKK (hukuki doğrulama gereken maddeler) |
-| [deployment.md](docs/deployment.md) | Kurulum, Nginx/PHP-FPM, kuyruk, zamanlayıcı, yedek/geri yükleme |
+| [cpanel-kurulum.md](docs/cpanel-kurulum.md) | **cPanel demo kurulumu adım adım** (Node.js gerekmez), demo hesapları, kurulum sonrası test listesi |
+| [deployment.md](docs/deployment.md) | VPS kurulumu, Nginx/PHP-FPM, kuyruk, zamanlayıcı, yedek/geri yükleme |
 | [test-plan.md](docs/test-plan.md) | Senaryolar ve sınırlar |
 | [decisions.md](docs/decisions.md) | ADR'ler ve açık konular |
 

@@ -1,5 +1,8 @@
 # Kurulum ve dağıtım
 
+> cPanel üzerinde demo/test kurulumu için: **[cpanel-kurulum.md](cpanel-kurulum.md)**. Bu belge VPS/üretim kurulumunu anlatır.
+> Derlenmiş CSS/JS (`public/build`) depoda bulunur; sunucuda Node.js gerekmez. Ön yüz kodu değişirse `npm run build` çalıştırıp `public/build`'i commit edin (CI kontrol eder).
+
 ## Gereksinimler
 - PHP **8.4** (8.2+ çalışır; bu teslimat PHP 8.3.6 ile test edildi) + eklentiler: `pdo_mysql`, `mbstring`, `intl`, `gd`, `openssl`, `bcmath` (önerilir), `redis` (üretim), `pcntl` (eşzamanlılık testleri)
 - Composer 2, Node 20/22 LTS + npm, MySQL **8.0.16+** (CHECK kısıtları için), Redis 6+ (üretim kuyruğu/önbellek), Nginx + PHP-FPM, TLS sertifikası
