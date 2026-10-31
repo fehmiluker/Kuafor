@@ -1,0 +1,15 @@
+# /etc/systemd/system/kuafor-scheduler.service
+# Run on exactly ONE server (jobs also use onOneServer() with a shared cache lock).
+[Unit]
+Description=Kuafor Laravel scheduler
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/var/www/kuafor/current
+ExecStart=/usr/bin/php artisan schedule:work
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

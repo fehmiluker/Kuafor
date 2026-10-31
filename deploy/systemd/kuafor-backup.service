@@ -1,0 +1,8 @@
+[Unit]
+Description=Kuafor encrypted database backup
+
+[Service]
+Type=oneshot
+User=kuafor-backup
+EnvironmentFile=/etc/kuafor/backup.env
+ExecStart=/var/www/kuafor/current/deploy/scripts/backup.sh
