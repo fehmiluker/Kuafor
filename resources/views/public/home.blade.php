@@ -30,6 +30,8 @@
     </div>
 </section>
 
+<x-ad-slot placement="home" class="mt-10" />
+
 <section class="mt-10" aria-labelledby="feat-h">
     <h2 id="feat-h" class="text-xl font-bold tracking-tight text-slate-900">Öne çıkan salonlar</h2>
     @if($featured->isEmpty())

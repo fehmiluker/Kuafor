@@ -13,6 +13,7 @@
     <div class="card p-5"><p class="text-sm text-slate-500">Onay bekleyen</p><p class="mt-2 text-4xl font-extrabold text-amber-600">{{ $counts['pending'] }}</p></div>
     <div class="card p-5"><p class="text-sm text-slate-500">Önümüzdeki 7 gün</p><p class="mt-2 text-4xl font-extrabold text-violet-700">{{ $counts['week'] }}</p></div>
 </div>
+<x-ad-slot placement="panel_dashboard" class="mt-6" />
 <div class="mt-6 grid gap-6 lg:grid-cols-2">
     <section class="card p-5" aria-labelledby="pend-h">
         <div class="flex items-center justify-between"><h2 id="pend-h" class="text-lg font-bold text-slate-900">Onay bekleyen talepler</h2><a href="{{ route('tenant.appointments.index', ['durum' => 'pending']) }}" class="text-sm text-brand-700 hover:underline">Tümü</a></div>

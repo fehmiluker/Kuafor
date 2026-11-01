@@ -46,7 +46,8 @@ Demo paket fiyatları (299/599/999 ₺/ay) yönetilebilir örnek değerlerdir: `
 - **Herkese açık:** `/` · `/salonlar/{il}/{ilçe}?kategori=&tarih=` · `/salon/{slug}` · `/salon/{slug}/randevu` (Livewire sihirbazı) · `/randevu/{ref}?token=` (misafir yönetimi) · `/teklif/{id}?token=` · `/sitemap.xml` · `/robots.txt`
 - **Müşteri:** `/hesabim` (randevular, favoriler, yorumlar, profil, telefon doğrulama, KVKK veri indirme/talep)
 - **İşletme paneli:** `/panel` (özet, takvim + sürükle-bırak, randevular, müşteriler, hizmetler, personel, şubeler + kapalı zaman + WhatsApp, yorumlar, raporlar, ayarlar, abonelik)
-- **Platform yönetimi:** `/admin` (MRR/ARR, işletmeler, paketler, abonelik, moderasyon, denetim, sistem) — MFA zorunlu
+- **Platform yönetimi:** `/admin` (MRR/ARR, işletmeler, paketler, abonelik, moderasyon, **reklamlar**, denetim, sistem) — MFA zorunlu
+- **Sponsor bannerlar:** işletme paneli özeti, ana sayfa ve arama sonuçlarında "Reklam" etiketli banner; `/admin/reklamlar` ile görsel, hedef adres, tarih, şehir hedefi; gösterim/tıklama sayaçları
 
 ## Testler
 ```bash

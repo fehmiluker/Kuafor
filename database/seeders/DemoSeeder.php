@@ -140,6 +140,8 @@ class DemoSeeder extends Seeder
             $svc->create($t2, new CreateAppointmentData($cankaya->id, [$mcut->id], null, CarbonImmutable::parse("$tomorrow $time", 'Europe/Istanbul')->utc(), 'Müşteri '.($i + 1), '+90555200000'.$i));
         }
 
+        $this->call(AdDemoSeeder::class);
+
         $this->command?->info('Demo verisi oluşturuldu. Kullanıcılar ve şifre için README.md\'ye bakın.');
         unset($pending, $t3, $burak);
     }

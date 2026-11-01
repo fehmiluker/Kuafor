@@ -48,7 +48,8 @@
         @if($results->isEmpty())
             <x-empty title="Aramanıza uygun salon bulunamadı" :action="route('search')" actionLabel="Filtreleri temizle">Farklı bir tarih, ilçe veya kategori deneyin.</x-empty>
         @else
-            <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">@foreach($results as $salon)@include('public._salon-card', ['salon' => $salon])@endforeach</div>
+            <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">@foreach($results as $salon)@include('public._salon-card', ['salon' => $salon])@if($loop->iteration === 6)<x-ad-slot placement="search" :city-id="$city?->id" class="sm:col-span-2 xl:col-span-3" />@endif @endforeach</div>
+            @if($results->count() < 6)<x-ad-slot placement="search" :city-id="$city?->id" class="mt-6" />@endif
             {{ $results->links() }}
         @endif
     </section>
