@@ -3,10 +3,10 @@
 @section('description', 'Şehrinizdeki kuaför ve güzellik salonlarını bulun, fiyatları ve doğrulanmış yorumları görün, ücretsiz online randevu alın.')
 @section('canonical', route('home'))
 @section('content')
-<section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-50 via-fuchsia-50 to-purple-100 px-6 py-10 text-slate-900 ring-1 ring-violet-100 sm:px-10 sm:py-16">
-    <h1 class="max-w-2xl text-3xl font-extrabold tracking-tight text-violet-950 sm:text-5xl">Kuaför ve güzellik salonu randevunuzu saniyeler içinde alın</h1>
-    <p class="mt-4 max-w-xl text-base text-violet-800 sm:text-lg">Gerçek müsaitlik, güncel fiyatlar, yalnızca hizmet almış müşterilerin yorumları. Ödeme salonda.</p>
-    <form action="{{ route('search') }}" method="GET" class="mt-8 grid gap-3 rounded-2xl bg-white/95 p-4 text-slate-800 shadow-xl shadow-violet-200/50 sm:grid-cols-4" role="search" aria-label="Salon ara">
+<section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-violet-50 to-white px-6 py-10 text-slate-900 ring-1 ring-slate-200 sm:px-10 sm:py-16">
+    <h1 class="max-w-2xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Kuaför ve güzellik salonu randevunuzu saniyeler içinde alın</h1>
+    <p class="mt-4 max-w-xl text-base text-slate-600 sm:text-lg">Gerçek müsaitlik, güncel fiyatlar, yalnızca hizmet almış müşterilerin yorumları. Ödeme salonda.</p>
+    <form action="{{ route('search') }}" method="GET" class="mt-8 grid gap-3 rounded-2xl bg-white/95 p-4 text-slate-800 shadow-sm shadow-violet-100/50 sm:grid-cols-4" role="search" aria-label="Salon ara">
         <div>
             <label for="h-city" class="sr-only">Şehir</label>
             <select id="h-city" class="input" onchange="this.form.action = this.value ? '{{ url('salonlar') }}/' + this.value : '{{ route('search') }}'">
@@ -24,14 +24,14 @@
 </section>
 
 <section class="mt-12" aria-labelledby="cat-h">
-    <h2 id="cat-h" class="text-xl font-bold tracking-tight text-violet-950">Popüler hizmetler</h2>
+    <h2 id="cat-h" class="text-xl font-bold tracking-tight text-slate-900">Popüler hizmetler</h2>
     <div class="mt-3 flex flex-wrap gap-2">
         @foreach($categories as $cat)<a href="{{ route('search', ['kategori' => $cat->slug]) }}" class="chip">{{ $cat->name }}</a>@endforeach
     </div>
 </section>
 
 <section class="mt-10" aria-labelledby="feat-h">
-    <h2 id="feat-h" class="text-xl font-bold tracking-tight text-violet-950">Öne çıkan salonlar</h2>
+    <h2 id="feat-h" class="text-xl font-bold tracking-tight text-slate-900">Öne çıkan salonlar</h2>
     @if($featured->isEmpty())
         <x-empty title="Henüz listelenen salon yok">Platformda listelenen ilk işletme siz olun.</x-empty>
     @else
