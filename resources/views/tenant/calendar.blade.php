@@ -1,6 +1,7 @@
 @extends('layouts.panel')
 @section('title', 'Takvim')
 @section('content')
+<div class="mb-5 rounded-3xl bg-gradient-to-r from-violet-100 to-fuchsia-50 p-5 ring-1 ring-violet-100"><h2 class="text-2xl font-extrabold text-violet-950">Randevu takvimi</h2><p class="mt-1 text-sm text-violet-700">Şube ve personel seçerek randevularınızı yönetin.</p></div>
 <div class="mb-4 flex flex-wrap items-end gap-3">
     <form method="GET" class="flex items-end gap-2">
         <div><label for="c-branch" class="label">Şube</label><select id="c-branch" name="sube" class="input" onchange="this.form.submit()">@foreach($branches as $b)<option value="{{ $b->id }}" @selected($b->id === $branchId)>{{ $b->name }}</option>@endforeach</select></div>
@@ -17,6 +18,6 @@
 @if($branches->isEmpty())
     <x-empty title="Henüz şube yok" :action="route('tenant.branches.create')" actionLabel="Şube ekle">Takvimi kullanmak için önce bir şube oluşturun.</x-empty>
 @else
-    <div class="card p-2 sm:p-4"><div id="calendar" data-feed="{{ route('tenant.calendar.events') }}" data-branch="{{ $branchId }}" data-can-move="{{ $canMove ? 1 : 0 }}" data-drag-url="{{ route('tenant.appointments.drag', '__ID__') }}" aria-label="Randevu takvimi"></div></div>
+    <div class="card overflow-x-auto p-3 sm:p-5"><div id="calendar" data-feed="{{ route('tenant.calendar.events') }}" data-branch="{{ $branchId }}" data-can-move="{{ $canMove ? 1 : 0 }}" data-drag-url="{{ route('tenant.appointments.drag', '__ID__') }}" aria-label="Randevu takvimi"></div></div>
 @endif
 @endsection
