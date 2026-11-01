@@ -8,9 +8,9 @@
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
     --color-brand-50: #faf5ff;
     --color-brand-100: #f3e8ff;
-    --color-brand-500: #a21caf;
-    --color-brand-600: #9333ea;
-    --color-brand-700: #6b21a8;
+    --color-brand-500: #8b5cf6;
+    --color-brand-600: #7c3aed;
+    --color-brand-700: #6d28d9;
     --color-brand-900: #3b0764;
 }
 
@@ -46,12 +46,12 @@
 
 /* Modern violet design system — customer and tenant surfaces */
 @layer components {
-  .btn-primary { @apply rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-fuchsia-700; }
+  .btn-primary { @apply rounded-full bg-violet-600 shadow-sm hover:bg-violet-700; }
   .btn-secondary { @apply rounded-full border-violet-100 hover:bg-violet-50; }
-  .card { @apply rounded-2xl border border-violet-100 shadow-sm shadow-violet-100/50; }
+  .card { @apply rounded-2xl border border-slate-200 shadow-sm; }
   .input { @apply rounded-xl focus:ring-violet-500; }
   .nav-link { @apply rounded-xl hover:bg-violet-50 hover:text-violet-700; }
   .nav-link-active { @apply bg-violet-100 text-violet-800; }
-  .chip { @apply rounded-full border-violet-100 bg-violet-50 text-violet-800 hover:bg-violet-100; }
+  .chip { @apply rounded-full border-slate-200 bg-white text-slate-700 hover:bg-violet-50; }
   .chip-active { @apply bg-violet-600 text-white; }
 }
