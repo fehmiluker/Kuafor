@@ -97,11 +97,16 @@ if [ -f "$APP_DIR/.env" ] && grep -q '^DB_PASSWORD=.\+' "$APP_DIR/.env"; then
 else
   DB_PASS="$(openssl rand -hex 24)"
 fi
+# The app connects over TCP (127.0.0.1); the account exists for both host forms so neither
+# socket permissions nor host-name resolution can lock it out.
 mysql <<SQL
 CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
+CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
 ALTER USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';
+ALTER USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';
+GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'127.0.0.1';
 FLUSH PRIVILEGES;
 SQL
 
@@ -136,6 +141,7 @@ if [ ! -f .env ]; then
   sed -i \
     -e "s#^APP_URL=.*#APP_URL=${APP_URL}#" \
     -e "s#^CORS_ALLOWED_ORIGINS=.*#CORS_ALLOWED_ORIGINS=${APP_URL}#" \
+    -e "s#^DB_HOST=.*#DB_HOST=127.0.0.1#" \
     -e "s#^DB_DATABASE=.*#DB_DATABASE=${DB_NAME}#" \
     -e "s#^DB_USERNAME=.*#DB_USERNAME=${DB_USER}#" \
     -e "s#^DB_PASSWORD=.*#DB_PASSWORD=${DB_PASS}#" \
