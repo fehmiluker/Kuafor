@@ -1,6 +1,7 @@
 @extends('layouts.panel')
 @section('title', 'Randevular')
 @section('content')
+<div class="mb-5 rounded-3xl bg-gradient-to-r from-violet-100 to-fuchsia-50 p-5 ring-1 ring-violet-100"><h2 class="text-2xl font-extrabold text-violet-950">Randevu yönetimi</h2><p class="mt-1 text-sm text-violet-700">Müşterilerinizi, saatleri ve randevu durumlarını kolayca takip edin.</p></div>
 <form method="GET" class="mb-4 grid gap-2 sm:grid-cols-5">
     <label class="sr-only" for="a-q">Ara</label><input id="a-q" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Müşteri adı veya randevu no" class="input sm:col-span-2">
     <label class="sr-only" for="a-s">Durum</label><select id="a-s" name="durum" class="input"><option value="">Tüm durumlar</option>@foreach(\App\Enums\AppointmentStatus::cases() as $s)<option value="{{ $s->value }}" @selected(($filters['durum'] ?? '') === $s->value)>{{ $s->label() }}</option>@endforeach</select>
