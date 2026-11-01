@@ -6,12 +6,12 @@
 
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --color-brand-50: #eef4ff;
-    --color-brand-100: #dbe6fe;
-    --color-brand-500: #3f6ae0;
-    --color-brand-600: #2f55c7;
-    --color-brand-700: #2643a0;
-    --color-brand-900: #1b2c5e;
+    --color-brand-50: #faf5ff;
+    --color-brand-100: #f3e8ff;
+    --color-brand-500: #a21caf;
+    --color-brand-600: #9333ea;
+    --color-brand-700: #6b21a8;
+    --color-brand-900: #3b0764;
 }
 
 @utility btn {
@@ -43,3 +43,15 @@
 [x-cloak] { display: none !important; }
 .fc .fc-toolbar-title { font-size: 1.1rem; }
 .fc .fc-event { cursor: pointer; }
+
+/* Modern violet design system — customer and tenant surfaces */
+@layer components {
+  .btn-primary { @apply rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-fuchsia-700; }
+  .btn-secondary { @apply rounded-full border-violet-100 hover:bg-violet-50; }
+  .card { @apply rounded-2xl border border-violet-100 shadow-sm shadow-violet-100/50; }
+  .input { @apply rounded-xl focus:ring-violet-500; }
+  .nav-link { @apply rounded-xl hover:bg-violet-50 hover:text-violet-700; }
+  .nav-link-active { @apply bg-violet-100 text-violet-800; }
+  .chip { @apply rounded-full border-violet-100 bg-violet-50 text-violet-800 hover:bg-violet-100; }
+  .chip-active { @apply bg-violet-600 text-white; }
+}
