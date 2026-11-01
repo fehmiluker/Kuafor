@@ -5,7 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Proje
 Kuaför/güzellik salonları için çok işletmeli (multi-tenant) SaaS randevu platformu. Laravel 12 monolit · PHP 8.4 hedef (8.3+) · MySQL 8 · Blade + Livewire 3 (Alpine) · Tailwind 4 + Vite · FullCalendar 6 · REST API v1 (Sanctum). Arayüz metinleri ve dokümanlar Türkçe; kod ve kod yorumları İngilizce.
 
-**Müşteriden online ödeme/kapora alınmaz** — `appointment_payments` yalnızca kayıttır. Ayrıntılı belgeler `docs/` altında (architecture, decisions/ADR, erd, api, security, whatsapp, deployment, test-plan).
+**Müşteriden online ödeme/kapora alınmaz** — `appointment_payments` yalnızca kayıttır; kartla ödeme yalnızca salon sahibinin platform aboneliği içindir (PayTR). Ayrıntılı belgeler `docs/` altında (architecture, decisions/ADR, erd, api, security, whatsapp, paytr-netgsm, cpanel-kurulum, deployment, test-plan).
+
+## Dallar ve yayın
+- `main`: kararlı sürüm; cPanel kurulumu (`docs/cpanel-kurulum.md`) bu daldan çeker. `claude/kuafor-saas-platform`: geliştirme dalı. `design/modern-purple-ui`: yeni arayüz (PR #1, taslak).
+- **`main`'e birleştirme ve canlı sunucuya yayın yalnızca kullanıcı açıkça isterse.** `claude/ftp-deploy-workflow` dalındaki `deploy-ftp.yml` `main`'e birleşirse her `main` push'u FTP ile canlıya yükler (yalnızca dosya; migrate/optimize çalıştırmaz).
 
 ## Komutlar
 ```bash
@@ -26,7 +30,9 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 
 - **Testler gerçek MySQL 8 ister** (`phpunit.xml` → `kuafor_test`); SQLite ile çalışmaz — CHECK kısıtları, bileşik FK'ler ve satır kilitleri testin parçasıdır.
 - `tests/Concurrency` `pcntl` gerektirir (yoksa atlanır); `DatabaseTruncation` + fork edilen süreçlerle gerçek InnoDB yarışı test eder.
-- **`public/build` depoda commit'lidir** (cPanel hosting'de Node yok). CI, `npm run build` sonrası `git diff public/build` temiz değilse başarısız olur.
+- **`public/build` depoda commit'lidir** (cPanel hosting'de Node yok). CI, `npm run build` sonrası `git diff public/build` temiz değilse başarısız olur ("Committed frontend build is up to date"). Blade'de Tailwind sınıfı değiştiren her commit'te `npm run build` çalıştırıp `public/build`'i de commit edin.
+- `npm run build` öncesi **`composer install` şart**: `resources/css/app.css` `vendor/laravel/.../Pagination` görünümlerini `@source` ile tarar; `vendor/` yoksa CSS farklı çıkar ve CI kırılır.
+- `design/**` dallarında `.github/workflows/build-assets.yml` (o dalda) derlemeyi otomatik commit eder ve CI'ı `workflow_dispatch` ile yeniden başlatır; bu dallarda push/PR çalışmalarında eski build yalnızca uyarıdır.
 - CI (`.github/workflows/ci.yml`): PHP 8.4 + MySQL 8, `npm ci && npm run build`, build güncelliği, `pint --test`, `php artisan test`.
 
 ## Mimari (büyük resim)
@@ -58,6 +64,8 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 - SMS: `SmsProviderInterface` → `LogSmsProvider` / `NetgsmSmsProvider` (`SMS_PROVIDER=log|netgsm`).
 - Abonelik tahsilatı: `PaymentGatewayInterface` → `ManualPaymentGateway` / `PaytrPaymentGateway` (`SUBSCRIPTION_PAYMENT_PROVIDER=manual|paytr`). PayTR `HostedCheckoutGateway`'dir: `CheckoutService` `subscription_checkouts` kaydı + iFrame token oluşturur; sonuç yalnızca imzalı callback'ten (`/webhooks/subscription-payments/paytr`, cevap düz `OK`) gelir, tutar checkout kaydından alınır. Tekrarlayan çekim yok. Ayrıntı: `docs/paytr-netgsm.md`.
 - Abonelik hakları `entitlements_snapshot`'tan okunur (ADR-007): `EntitlementService`, `subscribed` / `feature` middleware'leri, `PlanLimitException`.
+- Sağlayıcılar `AppServiceProvider::register` içinde config'e göre **singleton** bağlanır. Sağlayıcı HTTP hataları (`HttpClientException`) log'a yazılır, kullanıcıya `DomainRuleException` ile genel mesaj gösterilir.
+- CSP `Http/Middleware/SecurityHeaders::policy($extraOrigins)` ile üretilir; harici bir alan adı (ör. PayTR) yalnızca ihtiyaç duyan sayfanın cevabına eklenir, global politikaya değil.
 
 ### Zaman ve para
 - UTC saklanır, şube saat diliminde gösterilir (`Support/LocalTime`). Tüm tarihler `CarbonImmutable` (ADR-012).
@@ -67,3 +75,5 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 - `Tests\TestCase`: `RefreshDatabase` + `TestBaseSeeder`, `plan($slug)`, `inTenant()`.
 - `Tests\Support\BuildsSalon`: standart fixture (Profesyonel plan, İstanbul şubesi, 2 hizmet, 2 personel), zamanı **Pazartesi 2026-11-02 08:00 İstanbul**'a sabitler; `at('10:00')` yerel saati UTC'ye çevirir.
 - Seeder tarafında `Database\Seeders\Support\SalonBuilder` fixture/demosalon kurar.
+- `phpunit.xml` dış servisleri kapatır (`WHATSAPP_PROVIDER_MODE=fake`, `SMS_PROVIDER=log`, `manual` ödeme). Başka sağlayıcıyı test ederken `config([...])` sonrası `$this->app->forgetInstance(Interface::class)` yapın ve dış API'yi `Http::fake()` ile taklit edin (örnek: `tests/Feature/PaymentProvidersTest.php`).
+- Web panel testleri: `$this->actingAs($this->owner($this->tenant))` (tek üyelik → tenant otomatik seçilir).
