@@ -33,7 +33,7 @@
 <div class="flex min-h-full bg-violet-50/40">
     <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transform border-r border-violet-100 bg-white transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'" aria-label="İşletme menüsü">
         <div class="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-            <a href="{{ route('tenant.dashboard') }}" class="truncate font-bold text-violet-800">{{ $tenant?->name }}</a>
+            <a href="{{ route('tenant.dashboard') }}" class="truncate text-lg font-extrabold tracking-tight text-violet-800">{{ $tenant?->name }}</a>
             <button class="btn-ghost btn-sm lg:hidden" @click="open=false" aria-label="Menüyü kapat">✕</button>
         </div>
         <nav class="space-y-1 p-3">
@@ -49,9 +49,9 @@
         </div>
     </aside>
     <div class="flex min-w-0 flex-1 flex-col">
-        <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-violet-100 bg-white px-4">
+        <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-violet-100 bg-white/95 px-4 shadow-sm shadow-violet-100/40 backdrop-blur">
             <button class="btn-ghost btn-sm lg:hidden" @click="open=true" aria-label="Menüyü aç">☰</button>
-            <h1 class="truncate text-base font-semibold">@yield('title', 'Panel')</h1>
+            <h1 class="truncate text-lg font-bold text-violet-950">@yield('title', 'Panel')</h1>
             <div class="flex items-center gap-2">
                 <a href="{{ route('tenant.notifications') }}" class="btn-ghost btn-sm relative" aria-label="Bildirimler ({{ $unread }} okunmamış)">🔔 @if($unread)<span class="badge bg-red-600 text-white">{{ $unread }}</span>@endif</a>
                 <span class="hidden text-sm text-slate-600 sm:inline">{{ $u->name }}</span>
