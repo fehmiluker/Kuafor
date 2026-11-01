@@ -1,5 +1,5 @@
 name: CI
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,11 +26,20 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci && npm run build
       # public/build is committed (hosting needs no Node.js); it must match the sources.
+      # On design/** pushes and PRs a stale build is only a warning: build-assets.yml
+      # commits the rebuild and re-runs this workflow (workflow_dispatch), which is strict.
       - name: Committed frontend build is up to date
+        env:
+          AUTO_BUILD: ${{ github.event_name != 'workflow_dispatch' && startsWith(github.head_ref || github.ref_name, 'design/') }}
         run: |
-          if ! git diff --exit-code -- public/build; then
-            echo "public/build guncel degil - 'npm run build' calistirip commit edin."
-            exit 1
+          if [ -n "$(git status --porcelain -- public/build)" ]; then
+            git status --short -- public/build
+            if [ "$AUTO_BUILD" = "true" ]; then
+              echo "::warning::public/build guncel degil; 'Build frontend assets' is akisi derleyip commit edecek."
+            else
+              echo "public/build guncel degil - 'npm run build' calistirip commit edin."
+              exit 1
+            fi
           fi
       - run: cp .env.example .env && php artisan key:generate
       - run: vendor/bin/pint --test

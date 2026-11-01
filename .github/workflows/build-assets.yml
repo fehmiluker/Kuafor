@@ -1,0 +1,66 @@
+# Design branches: rebuild public/build after every push and commit it if it changed,
+# so a forgotten `npm run build` no longer breaks CI. public/build stays committed
+# because cPanel hosting has no Node.js.
+name: Build frontend assets
+on:
+  push:
+    branches: ['design/**']
+    paths:
+      - 'resources/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
+      - 'public/build/**'
+      - 'composer.lock'
+      - '.github/workflows/build-assets.yml'
+
+permissions:
+  contents: write # push the rebuilt assets
+  actions: write  # start CI for the bot commit
+
+concurrency:
+  group: build-assets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      # app.css scans vendor/laravel/.../Pagination views (@source), so vendor/
+      # must exist or the CSS differs from the one CI builds.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - run: composer install --no-interaction --prefer-dist --no-scripts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci && npm run build
+
+      - name: Commit updated build
+        id: commit
+        run: |
+          if [ -z "$(git status --porcelain -- public/build)" ]; then
+            echo "public/build zaten guncel."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A public/build
+          git commit -m "build: rebuild frontend assets [auto]"
+          # Fails if the branch moved meanwhile; the newer push's run rebuilds instead.
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # Pushes made with GITHUB_TOKEN do not trigger workflows; workflow_dispatch is
+      # the exception, so start CI explicitly for the new commit.
+      - name: Run CI on the rebuilt commit
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"

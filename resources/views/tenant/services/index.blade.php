@@ -1,6 +1,7 @@
 @extends('layouts.panel')
 @section('title', 'Hizmetler')
 @section('content')
+<div class="mb-5 rounded-3xl bg-gradient-to-r from-violet-100 to-fuchsia-50 p-5 ring-1 ring-slate-200"><h2 class="text-2xl font-extrabold text-slate-900">Hizmet kataloğu</h2><p class="mt-1 text-sm text-violet-700">Salonunuzun hizmetlerini ve fiyatlarını tek yerden yönetin.</p></div>
 @if($canManage)<div class="mb-4 flex justify-end"><a href="{{ route('tenant.services.create') }}" class="btn-primary">+ Hizmet ekle</a></div>@endif
 @if($services->isEmpty())
     <x-empty title="Henüz hizmet eklemediniz" :action="$canManage ? route('tenant.services.create') : null" actionLabel="Hizmet ekle">Süre, fiyat ve hazırlık tamponu ile hizmetlerinizi tanımlayın.</x-empty>
