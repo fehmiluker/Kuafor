@@ -11,6 +11,8 @@ on:
       - 'package-lock.json'
       - 'vite.config.js'
       - 'public/build/**'
+      - 'composer.lock'
+      - '.github/workflows/build-assets.yml'
 
 permissions:
   contents: write # push the rebuilt assets
@@ -27,6 +29,12 @@ jobs:
       BRANCH: ${{ github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+      # app.css scans vendor/laravel/.../Pagination views (@source), so vendor/
+      # must exist or the CSS differs from the one CI builds.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - run: composer install --no-interaction --prefer-dist --no-scripts
       - uses: actions/setup-node@v4
         with:
           node-version: 22
