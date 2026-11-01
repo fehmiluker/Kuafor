@@ -7,13 +7,13 @@
     + ($tenant->rating_count ? ['aggregateRating' => ['@type' => 'AggregateRating', 'ratingValue' => (float) $tenant->rating_avg, 'reviewCount' => $tenant->rating_count]] : [])
     + ($branches->first()?->address ? ['address' => $branches->first()->address] : []); @endphp
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
-<div class="overflow-hidden rounded-3xl bg-white shadow-lg shadow-violet-100/50 ring-1 ring-violet-100">
+<div class="overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-100/50 ring-1 ring-slate-200">
     <div class="h-52 bg-gradient-to-br from-fuchsia-100 via-violet-100 to-indigo-100 sm:h-72" @if($tenant->cover_path) style="background-image:url('{{ Storage::disk('public')->url($tenant->cover_path) }}');background-size:cover;background-position:center" @endif role="img" aria-label="{{ $tenant->name }} kapak"></div>
     <div class="flex flex-col gap-5 p-6 sm:flex-row sm:items-end sm:justify-between">
         <div class="flex items-center gap-4">
             @if($tenant->logo_path)<img src="{{ Storage::disk('public')->url($tenant->logo_path) }}" alt="{{ $tenant->name }} logosu" class="-mt-14 h-20 w-20 rounded-xl bg-white object-cover ring-4 ring-white">@endif
             <div>
-                <h1 class="text-2xl font-extrabold text-violet-950 sm:text-3xl">{{ $tenant->name }}</h1>
+                <h1 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ $tenant->name }}</h1>
                 @if($tenant->rating_count)<x-stars :value="$tenant->rating_avg" :count="$tenant->rating_count" />@endif
             </div>
         </div>
@@ -26,24 +26,24 @@
 
 <div class="mt-6 grid gap-6 lg:grid-cols-3">
     <div class="space-y-6 lg:col-span-2">
-        @if($tenant->description)<section class="card p-5"><h2 class="text-lg font-bold text-violet-950">Hakkında</h2><p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $tenant->description }}</p></section>@endif
+        @if($tenant->description)<section class="card p-5"><h2 class="text-lg font-bold text-slate-900">Hakkında</h2><p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $tenant->description }}</p></section>@endif
 
         @if($media->isNotEmpty())
-            <section class="card p-5" aria-labelledby="g-h"><h2 id="g-h" class="text-lg font-bold text-violet-950">Fotoğraflar</h2>
+            <section class="card p-5" aria-labelledby="g-h"><h2 id="g-h" class="text-lg font-bold text-slate-900">Fotoğraflar</h2>
                 <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">@foreach($media as $m)<img src="{{ $m->url() }}" alt="{{ $m->alt_text }}" loading="lazy" class="aspect-square w-full rounded-2xl object-cover">@endforeach</div>
             </section>
         @endif
 
         @foreach($branches as $b)
             <section class="card p-5" aria-labelledby="svc-{{ $b->id }}">
-                <h2 id="svc-{{ $b->id }}" class="text-lg font-bold text-violet-950">Hizmetler @if($branches->count() > 1)— {{ $b->name }}@endif</h2>
+                <h2 id="svc-{{ $b->id }}" class="text-lg font-bold text-slate-900">Hizmetler @if($branches->count() > 1)— {{ $b->name }}@endif</h2>
                 @php $list = $servicesByBranch[$b->id]; @endphp
                 @if($list->isEmpty())<p class="mt-2 text-sm text-slate-500">Bu şubede henüz online randevuya açık hizmet yok.</p>@endif
                 <ul class="mt-3 divide-y divide-slate-100">
                     @foreach($list as $s)
                         <li class="flex items-center justify-between gap-3 py-3">
                             <div><p class="font-medium">{{ $s->name }}</p><p class="text-xs text-slate-500">{{ $s->category?->name }} · {{ $s->effective_duration }} dk</p></div>
-                            <div class="flex items-center gap-3"><span class="text-lg font-bold text-violet-950">{{ $s->effective_price->format() }}</span>
+                            <div class="flex items-center gap-3"><span class="text-lg font-bold text-slate-900">{{ $s->effective_price->format() }}</span>
                                 <a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id, 'hizmet' => $s->id]) }}" class="btn-secondary btn-sm">Seç</a></div>
                         </li>
                     @endforeach
@@ -52,7 +52,7 @@
         @endforeach
 
         <section class="card p-5" aria-labelledby="rev-h">
-            <h2 id="rev-h" class="text-lg font-bold text-violet-950">Doğrulanmış değerlendirmeler</h2>
+            <h2 id="rev-h" class="text-lg font-bold text-slate-900">Doğrulanmış değerlendirmeler</h2>
             <p class="text-xs text-slate-500">Yalnızca bu salonda randevusu tamamlanan müşteriler değerlendirme yazabilir.</p>
             @forelse($reviews as $r)
                 <article class="mt-4 border-t border-slate-100 pt-4">
@@ -71,7 +71,7 @@
     <aside class="space-y-6">
         @foreach($branches as $b)
             <section class="card p-5" aria-label="{{ $b->name }} bilgileri">
-                <h2 class="text-lg font-bold text-violet-950">{{ $b->name }}</h2>
+                <h2 class="text-lg font-bold text-slate-900">{{ $b->name }}</h2>
                 <p class="mt-1 text-sm text-slate-600">{{ $b->address }}</p>
                 <p class="text-sm text-slate-600">{{ collect([$b->district?->name, $b->city?->name])->filter()->implode(', ') }}</p>
                 @if($b->phone)<p class="mt-1 text-sm"><a href="tel:{{ $b->phone }}" class="text-brand-700 hover:underline">{{ $b->phone }}</a></p>@endif
@@ -87,7 +87,7 @@
             </section>
         @endforeach
         @if($employees->isNotEmpty())
-            <section class="card p-5"><h2 class="text-lg font-bold text-violet-950">Ekibimiz</h2>
+            <section class="card p-5"><h2 class="text-lg font-bold text-slate-900">Ekibimiz</h2>
                 <ul class="mt-3 space-y-2">@foreach($employees as $e)<li class="flex items-center gap-3">
                     @if($e->photo)<img src="{{ Storage::disk('public')->url($e->photo) }}" alt="" class="h-9 w-9 rounded-full object-cover">@else<span aria-hidden="true" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 font-semibold text-brand-700">{{ mb_substr($e->display_name, 0, 1) }}</span>@endif
                     <span class="text-sm">{{ $e->display_name }}</span></li>@endforeach</ul>
