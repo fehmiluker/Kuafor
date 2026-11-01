@@ -136,7 +136,6 @@ if [ ! -f .env ]; then
   sed -i \
     -e "s#^APP_URL=.*#APP_URL=${APP_URL}#" \
     -e "s#^CORS_ALLOWED_ORIGINS=.*#CORS_ALLOWED_ORIGINS=${APP_URL}#" \
-    -e "s#^DB_HOST=.*#DB_HOST=127.0.0.1#" \
     -e "s#^DB_DATABASE=.*#DB_DATABASE=${DB_NAME}#" \
     -e "s#^DB_USERNAME=.*#DB_USERNAME=${DB_USER}#" \
     -e "s#^DB_PASSWORD=.*#DB_PASSWORD=${DB_PASS}#" \
