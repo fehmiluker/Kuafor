@@ -155,7 +155,14 @@ chmod 640 .env
 say "Composer paketleri + veritabanı + demo veri"
 as_web composer install --no-dev --optimize-autoloader --no-interaction --quiet
 grep -q '^APP_KEY=base64:' .env || as_web php artisan key:generate --force
-as_web php artisan migrate --force --seed
+# Seed reference + demo data only on a fresh database (re-running the installer must not duplicate it).
+TENANTS="$(mysql -N -e "SELECT COUNT(*) FROM \`${DB_NAME}\`.tenants" 2>/dev/null || echo 0)"
+if [ "$TENANTS" = "0" ]; then
+  as_web php artisan migrate --force --seed
+else
+  as_web php artisan migrate --force
+  echo "Veritabanında ${TENANTS} işletme var; demo verisi yeniden yüklenmedi."
+fi
 as_web php artisan storage:link >/dev/null 2>&1 || true
 as_web php artisan optimize >/dev/null
 
