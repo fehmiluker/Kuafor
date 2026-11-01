@@ -8,8 +8,8 @@
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2">İçeriğe geç</a>
 <header class="border-b border-violet-100 bg-white/95 shadow-sm shadow-violet-100/50">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-        <a href="{{ route('home') }}" class="flex items-center gap-2 text-lg font-bold text-violet-800">
-            <span aria-hidden="true" class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">K</span>
+        <a href="{{ route('home') }}" class="flex items-center gap-2 text-lg font-extrabold tracking-tight text-violet-800">
+            <span aria-hidden="true" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-200">K</span>
             {{ config('app.name') }}
         </a>
         <nav aria-label="Ana menü" class="flex items-center gap-1 text-sm">
