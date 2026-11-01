@@ -6,9 +6,9 @@
 @unless(auth()->user()->phone_verified_at)
     <div class="mb-4 rounded-lg bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200">Üye olmadan aldığınız randevuları görmek için <a href="{{ route('account.profile') }}" class="font-semibold underline">telefonunuzu doğrulayın</a>.</div>
 @endunless
-<h1 class="text-xl font-bold">Yaklaşan randevular</h1>
+<h1 class="text-2xl font-extrabold text-slate-900">Yaklaşan randevular</h1>
 @forelse($upcoming as $a)
-    <div class="card mt-3 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="card mt-4 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <p class="font-semibold">{{ $tenants[$a->tenant_id]?->name }} — {{ $a->branch?->name }}</p>
             <p class="text-sm text-slate-600"><x-local-time :at="$a->starts_at_utc" :tz="$a->branch->timezone" format="d F l, H:i" /> · {{ $a->serviceSummary() }} · {{ $a->employee?->display_name }}</p>

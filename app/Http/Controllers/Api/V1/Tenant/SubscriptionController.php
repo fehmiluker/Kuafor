@@ -8,6 +8,7 @@ use App\Http\Resources\SubscriptionResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Plan;
 use App\Services\Billing\EntitlementService;
+use App\Services\Billing\HostedCheckoutGateway;
 use App\Services\Billing\PaymentGatewayInterface;
 use App\Services\Billing\SubscriptionService;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class SubscriptionController extends TenantApiController
             'over_limit' => $entitlements->overLimit($this->tenant()),
             'plans' => PlanResource::collection(Plan::with('features')->where('active', true)->where('public', true)->orderBy('sort_order')->get())->resolve($request),
             'automatic_payment_available' => $gateway->supportsAutomaticCharging(),
+            'card_payment_available' => $gateway instanceof HostedCheckoutGateway, // web panel: /panel/abonelik
         ]);
     }
 

@@ -45,9 +45,12 @@ Müşteriden çevrimiçi ödeme/kapora yok; `appointment_payments` yalnızca kay
 ## ADR-013 Hibrit WhatsApp numara modeli
 Kuaförlerin Meta kurulumu yapması gerçekçi değil. Varsayılan: platformun tek numarası (sıfır kurulum, ücret platformda, mesajda işletme adı). İsteğe bağlı: şubenin kendi numarası — Embedded Signup (tek tık), admin destekli kurulum veya manuel form. Platform bağlantısı tenant'sız olduğundan gelen olaylarda tenant, gönderen numarası ve bağlantıya bağlı tek kullanımlık token'dan çözülür. Bu, ilk talimattaki "her şube kendi numarasından" kuralını varsayılan olmaktan çıkarır; ürün sahibinin kararıdır (C seçeneği).
 
+## ADR-014 PayTR iFrame + Netgsm
+Abonelik ödemesi PayTR iFrame API ile: kart verisi platforma hiç gelmez (PCI kapsamı dışında kalır). Tutar ödeme başlatılırken `subscription_checkouts` kaydına sabitlenir; aboneliği yalnızca imzası doğrulanan PayTR bildirimi etkinleştirir ve bildirimdeki tutar bu tutardan düşükse etkinleştirmez. Kart saklama/tekrarlayan çekim kullanılmadı (ek sözleşme ve iptal/iade süreçleri gerektirir); her dönem sahibi öder. SMS için Netgsm REST v2 (`/sms/rest/v2/send`, isteğe bağlı `/otp`); hata ayrıntısı log'a, kullanıcıya genel mesaj.
+
 ## Açık konular / sonraki adımlar
 1. Şablonların Meta'ya API ile gönderimi ve onay durumunun otomatik senkronizasyonu (şu an seeder + elle güncelleme). Embedded Signup canlı Meta hesabıyla henüz denenmedi (sandbox ile test edildi).
-2. Gerçek SMS (Netgsm/İleti Merkezi vb.) ve abonelik ödeme sağlayıcısı (iyzico/PayTR) adaptörleri — arayüzler hazır.
+2. PayTR ve Netgsm adaptörleri eklendi (ADR-014); gerçek mağaza/hesapla test ödemesi ve SMS gönderimi yapılmalı. Tekrarlayan kart çekimi (PayTR kart saklama) ileride değerlendirilebilir.
 3. WhatsApp Flows ile zengin tarih/saat seçici (şu an liste mesajı + web linki).
 4. KVKK metinleri, VDS ve İYS süreçlerinin hukukçu tarafından tamamlanması; veri silme taleplerinin otomatik anonimleştirme işi.
 5. İngilizce dil dosyaları (altyapı `locale` ve `SetLocale` ile hazır; metinler şu an Blade'de Türkçe).

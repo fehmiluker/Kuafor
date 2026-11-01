@@ -11,6 +11,7 @@
 | Yetki | Spatie Permission (teams = tenant) + Policy + sorgu kapsamı |
 | WhatsApp | Resmî Meta Cloud API adaptörü + sandbox (fake) modu |
 
+> **Online demo (VPS, ör. Hostinger):** [docs/vps-kurulum.md](docs/vps-kurulum.md) — tek komut: `DOMAIN=… EMAIL=… DEMO_PASS=… bash install.sh`.
 > **Online demo (cPanel):** [docs/cpanel-kurulum.md](docs/cpanel-kurulum.md) — `bash deploy/cpanel/install.sh`, sonra `php artisan kuafor:check --demo`.
 
 ## Hızlı başlangıç
@@ -45,7 +46,8 @@ Demo paket fiyatları (299/599/999 ₺/ay) yönetilebilir örnek değerlerdir: `
 - **Herkese açık:** `/` · `/salonlar/{il}/{ilçe}?kategori=&tarih=` · `/salon/{slug}` · `/salon/{slug}/randevu` (Livewire sihirbazı) · `/randevu/{ref}?token=` (misafir yönetimi) · `/teklif/{id}?token=` · `/sitemap.xml` · `/robots.txt`
 - **Müşteri:** `/hesabim` (randevular, favoriler, yorumlar, profil, telefon doğrulama, KVKK veri indirme/talep)
 - **İşletme paneli:** `/panel` (özet, takvim + sürükle-bırak, randevular, müşteriler, hizmetler, personel, şubeler + kapalı zaman + WhatsApp, yorumlar, raporlar, ayarlar, abonelik)
-- **Platform yönetimi:** `/admin` (MRR/ARR, işletmeler, paketler, abonelik, moderasyon, denetim, sistem) — MFA zorunlu
+- **Platform yönetimi:** `/admin` (MRR/ARR, işletmeler, paketler, abonelik, moderasyon, **reklamlar**, denetim, sistem) — MFA zorunlu
+- **Sponsor bannerlar:** işletme paneli özeti, ana sayfa ve arama sonuçlarında "Reklam" etiketli banner; `/admin/reklamlar` ile görsel, hedef adres, tarih, şehir hedefi; gösterim/tıklama sayaçları
 
 ## Testler
 ```bash
@@ -74,6 +76,8 @@ Ayrıca: Pint temiz, `npm run build` başarılı, Playwright ile mobil tarayıc�
 | [api.md](docs/api.md) | Uçlar, örnekler, hata kodları, yetki matrisi |
 | [whatsapp.md](docs/whatsapp.md) | Meta Cloud API akışları, güvenlik, canlıya alma listesi |
 | [security.md](docs/security.md) | RBAC, uygulama güvenliği, KVKK (hukuki doğrulama gereken maddeler) |
+| [vps-kurulum.md](docs/vps-kurulum.md) | **VPS (Hostinger) demo kurulumu tek komutla**: Nginx, PHP, MySQL, kuyruk, cron, HTTPS, site şifresi |
+| [paytr-netgsm.md](docs/paytr-netgsm.md) | PayTR abonelik ödemesi ve Netgsm SMS kurulumu, test listesi |
 | [cpanel-kurulum.md](docs/cpanel-kurulum.md) | **cPanel demo kurulumu adım adım** (Node.js gerekmez), demo hesapları, kurulum sonrası test listesi |
 | [deployment.md](docs/deployment.md) | VPS kurulumu, Nginx/PHP-FPM, kuyruk, zamanlayıcı, yedek/geri yükleme |
 | [test-plan.md](docs/test-plan.md) | Senaryolar ve sınırlar |
@@ -85,6 +89,6 @@ Dağıtım dosyaları: `deploy/` (nginx, supervisor, systemd, backup/restore/dep
 | Entegrasyon | Bu teslimatta | Canlı için |
 |---|---|---|
 | WhatsApp | Hibrit: platform numarası (varsayılan, salon ayar yapmaz) + isteğe bağlı kendi numarası ("WhatsApp'ı bağla"). `fake` modu: gerçek mesaj yok; tüm akışlar testli | Meta işletme doğrulaması, App Review, numara kaydı, şablon onayı, `WHATSAPP_PROVIDER_MODE=meta` — [checklist](docs/whatsapp.md#canlıya-alma-kontrol-listesi) |
-| SMS (OTP) | `log` sağlayıcı | `SmsProviderInterface` için sağlayıcı adaptörü |
+| SMS (OTP) | `log` (varsayılan) veya **Netgsm** (`SMS_PROVIDER=netgsm`) | Netgsm API kullanıcısı + onaylı başlık — [kurulum](docs/paytr-netgsm.md#2-netgsm--sms-telefon-doğrulama-kodları) |
 | E-posta | `log`/SMTP | SMTP bilgileri |
-| Abonelik tahsilatı | `manual` (yönetici aktivasyonu + imzalı webhook), otomatik kart tahsilatı **yok** | `PaymentGatewayInterface` için iyzico/PayTR vb. adaptör |
+| Abonelik tahsilatı | `manual` (yönetici aktivasyonu) veya **PayTR** iFrame ile salon sahibinin kartla ödemesi (`SUBSCRIPTION_PAYMENT_PROVIDER=paytr`); otomatik/tekrarlayan çekim **yok** | PayTR mağaza bilgileri + Bildirim URL — [kurulum](docs/paytr-netgsm.md#1-paytr--kartla-abonelik-ödemesi) |

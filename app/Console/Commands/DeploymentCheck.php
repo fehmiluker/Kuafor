@@ -122,14 +122,28 @@ class DeploymentCheck extends Command
         $this->section('Dış servisler (demo güvenliği)');
         $waMode = config('whatsapp.mode');
         $realWhatsApp = $waMode === 'meta';
-        $realPayment = app(PaymentGatewayInterface::class)->supportsAutomaticCharging() || filled(config('subscriptions.webhook_secret'));
+        $paymentProvider = (string) config('subscriptions.provider');
+        $realPayment = $paymentProvider !== 'manual' || app(PaymentGatewayInterface::class)->supportsAutomaticCharging() || filled(config('subscriptions.webhook_secret'));
         $this->line('  WhatsApp: '.($realWhatsApp ? '<fg=yellow>GERÇEK (Meta Cloud API)</>' : 'kapalı / sandbox (gerçek mesaj gitmez)'));
-        $this->line('  Ödeme: '.($realPayment ? '<fg=yellow>ödeme bildirim adresi AÇIK</>' : 'gerçek ödeme yok, bildirim adresi kapalı'));
+        $this->line('  Ödeme: '.match (true) {
+            $paymentProvider === 'paytr' => '<fg=yellow>PayTR kartla ödeme AÇIK</>'.(config('subscriptions.paytr.test_mode') ? ' (test modu)' : ' (CANLI)'),
+            $realPayment => '<fg=yellow>ödeme bildirim adresi AÇIK</>',
+            default => 'gerçek ödeme yok, bildirim adresi kapalı',
+        });
         $this->line('  E-posta: '.config('mail.default').' · SMS: '.config('sms.provider'));
+        if ($paymentProvider === 'paytr') {
+            $this->check(filled(config('subscriptions.paytr.merchant_id')) && filled(config('subscriptions.paytr.merchant_key')) && filled(config('subscriptions.paytr.merchant_salt')),
+                'PayTR mağaza bilgileri tanımlı', '.env: PAYTR_MERCHANT_ID, PAYTR_MERCHANT_KEY, PAYTR_MERCHANT_SALT (PayTR Mağaza Paneli > Bilgi).');
+            $this->line('  PayTR Bildirim URL: '.url('/webhooks/subscription-payments/paytr'));
+        }
+        if (config('sms.provider') === 'netgsm') {
+            $this->check(filled(config('sms.netgsm.usercode')) && filled(config('sms.netgsm.password')) && filled(config('sms.netgsm.header')),
+                'Netgsm bilgileri tanımlı', '.env: NETGSM_USERCODE, NETGSM_PASSWORD, NETGSM_MSGHEADER.');
+        }
         if ($this->option('demo')) {
             $this->check(! $realWhatsApp, 'Demo: WhatsApp gerçek mesaj göndermiyor', 'Demo için .env: WHATSAPP_PROVIDER_MODE=fake');
             $this->check(blank(config('whatsapp.app_secret')) && blank(config('whatsapp.verify_token')), 'Demo: Meta anahtarları boş', 'Demo için META_APP_SECRET ve META_VERIFY_TOKEN boş bırakılmalı.');
-            $this->check(! $realPayment, 'Demo: gerçek ödeme kapalı', 'Demo için SUBSCRIPTION_WEBHOOK_SECRET boş, SUBSCRIPTION_PAYMENT_PROVIDER=manual olmalı.');
+            $this->check(! $realPayment || ($paymentProvider === 'paytr' && config('subscriptions.paytr.test_mode')), 'Demo: gerçek ödeme kapalı', 'Demo için SUBSCRIPTION_PAYMENT_PROVIDER=manual (veya paytr + PAYTR_TEST_MODE=true) ve SUBSCRIPTION_WEBHOOK_SECRET boş olmalı.');
             $this->check(config('mail.default') === 'log' && config('sms.provider') === 'log', 'Demo: e-posta ve SMS dışarı gönderilmiyor', 'Demo için MAIL_MAILER=log ve SMS_PROVIDER=log önerilir.');
             $this->check(! app()->environment('production'), 'Demo: APP_ENV production değil', 'Demo verisi için APP_ENV=staging kullanın.');
         }

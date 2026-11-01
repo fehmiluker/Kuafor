@@ -8,9 +8,9 @@
 @section('description', ($place ?: 'Türkiye').' bölgesindeki '.($catName ? mb_strtolower($catName) : 'kuaför ve güzellik').' salonları: fiyatlar, yorumlar ve online randevu.')
 @section('canonical', url()->current())
 @section('content')
-<h1 class="text-xl font-bold sm:text-2xl">{{ ucfirst($heading) }}</h1>
+<div class="rounded-3xl bg-gradient-to-r from-violet-100 via-fuchsia-50 to-white p-6 ring-1 ring-slate-200"><p class="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600">Salonları keşfet</p><h1 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ ucfirst($heading) }}</h1><p class="mt-2 text-sm text-violet-700">Size uygun salonu bulun, hizmetleri karşılaştırın ve randevunuzu oluşturun.</p></div>
 <div class="mt-4 grid gap-6 lg:grid-cols-[18rem_1fr]">
-    <form method="GET" action="{{ url()->current() }}" class="card h-fit space-y-4 p-4" aria-label="Filtreler">
+    <form method="GET" action="{{ url()->current() }}" class="card h-fit space-y-4 p-5 lg:sticky lg:top-20" aria-label="Filtreler">
         <div>
             <label class="label" for="s-city">Şehir</label>
             <select id="s-city" class="input" onchange="window.location = this.value ? '{{ url('salonlar') }}/' + this.value + window.location.search : '{{ route('search') }}' + window.location.search">
@@ -48,7 +48,8 @@
         @if($results->isEmpty())
             <x-empty title="Aramanıza uygun salon bulunamadı" :action="route('search')" actionLabel="Filtreleri temizle">Farklı bir tarih, ilçe veya kategori deneyin.</x-empty>
         @else
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">@foreach($results as $salon)@include('public._salon-card', ['salon' => $salon])@endforeach</div>
+            <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">@foreach($results as $salon)@include('public._salon-card', ['salon' => $salon])@if($loop->iteration === 6)<x-ad-slot placement="search" :city-id="$city?->id" class="sm:col-span-2 xl:col-span-3" />@endif @endforeach</div>
+            @if($results->count() < 6)<x-ad-slot placement="search" :city-id="$city?->id" class="mt-6" />@endif
             {{ $results->links() }}
         @endif
     </section>

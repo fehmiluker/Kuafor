@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\Web\Admin\AdminAdController;
 use App\Http\Controllers\Web\Admin\AdminPanelController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Customer\AccountController;
+use App\Http\Controllers\Web\Public\AdClickController;
 use App\Http\Controllers\Web\Public\GuestAppointmentController;
 use App\Http\Controllers\Web\Public\PublicController;
 use App\Http\Controllers\Web\Tenant\PanelAppointmentController;
 use App\Http\Controllers\Web\Tenant\PanelCatalogController;
 use App\Http\Controllers\Web\Tenant\PanelController;
+use App\Http\Controllers\Web\Tenant\SubscriptionPaymentController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Livewire\Public\BookingWizard;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +20,7 @@ Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('salonlar/{city?}/{district?}', [PublicController::class, 'search'])->name('search');
 Route::get('salon/{slug}', [PublicController::class, 'salon'])->name('salon.show');
 Route::get('salon/{slug}/randevu', BookingWizard::class)->name('salon.book');
+Route::get('reklam/{ad}', AdClickController::class)->whereNumber('ad')->middleware(['throttle:60,1', 'noindex'])->name('ads.click');
 Route::get('sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap');
 Route::get('robots.txt', [PublicController::class, 'robots'])->name('robots');
 Route::view('kvkk-aydinlatma', 'public.kvkk')->name('kvkk');
@@ -126,6 +130,8 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::post('ayarlar/medya', [PanelController::class, 'uploadMedia'])->name('settings.media');
         Route::get('abonelik', [PanelController::class, 'subscription'])->withoutMiddleware('subscribed')->name('subscription');
         Route::post('abonelik', [PanelController::class, 'changePlan'])->withoutMiddleware('subscribed')->name('subscription.change');
+        Route::post('abonelik/odeme', [SubscriptionPaymentController::class, 'start'])->withoutMiddleware('subscribed')->middleware('throttle:10,1')->name('subscription.pay');
+        Route::get('abonelik/odeme/{oid}', [SubscriptionPaymentController::class, 'show'])->withoutMiddleware('subscribed')->where('oid', '[A-Za-z0-9]+')->name('subscription.pay.show');
     });
 
     // ------------------------------------------------------------ super admin
@@ -142,6 +148,12 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::post('moderasyon/{review}', [AdminPanelController::class, 'moderate'])->whereNumber('review')->name('moderate');
         Route::get('denetim', [AdminPanelController::class, 'audit'])->name('audit');
         Route::get('sistem', [AdminPanelController::class, 'system'])->name('system');
+        Route::get('reklamlar', [AdminAdController::class, 'index'])->name('ads.index');
+        Route::get('reklamlar/yeni', [AdminAdController::class, 'create'])->name('ads.create');
+        Route::post('reklamlar', [AdminAdController::class, 'store'])->name('ads.store');
+        Route::get('reklamlar/{ad}', [AdminAdController::class, 'edit'])->whereNumber('ad')->name('ads.edit');
+        Route::put('reklamlar/{ad}', [AdminAdController::class, 'update'])->whereNumber('ad')->name('ads.update');
+        Route::delete('reklamlar/{ad}', [AdminAdController::class, 'destroy'])->whereNumber('ad')->name('ads.destroy');
         Route::post('sistem/whatsapp', [AdminPanelController::class, 'connectPlatformWhatsApp'])->name('whatsapp.platform');
         Route::delete('sistem/whatsapp', [AdminPanelController::class, 'disconnectPlatformWhatsApp'])->name('whatsapp.platform.disconnect');
         Route::post('isletmeler/{tenant:id}/subeler/{branch}/whatsapp', [AdminPanelController::class, 'connectBranchWhatsApp'])->whereNumber('branch')->name('tenants.whatsapp');
