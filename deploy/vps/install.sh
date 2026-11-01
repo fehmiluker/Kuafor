@@ -43,10 +43,26 @@ apt-get update -qq
 apt-get install -y -qq software-properties-common ca-certificates curl git unzip gnupg openssl \
   nginx mysql-server supervisor certbot python3-certbot-nginx apache2-utils ufw >/dev/null
 
-if ! command -v "php${PHP_VER}" >/dev/null; then
-  say "PHP ${PHP_VER} (ppa:ondrej/php)"
-  add-apt-repository -y ppa:ondrej/php >/dev/null
-  apt-get update -qq
+has_pkg() { apt-cache show "$1" >/dev/null 2>&1; }
+add_php_ppa() {
+  add-apt-repository -y ppa:ondrej/php >/dev/null 2>&1 && return 0
+  # Fallback without python-apt: add the PPA by hand (key: Ondřej Surý, 14AA40EC0831756756D7F66C4F4EA0AAE5267A6C).
+  curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x14AA40EC0831756756D7F66C4F4EA0AAE5267A6C" \
+    | gpg --dearmor --yes -o /usr/share/keyrings/ondrej-php.gpg || return 1
+  echo "deb [signed-by=/usr/share/keyrings/ondrej-php.gpg] https://ppa.launchpadcontent.net/ondrej/php/ubuntu ${VERSION_CODENAME} main" \
+    > /etc/apt/sources.list.d/ondrej-php.list
+}
+if ! has_pkg "php${PHP_VER}-fpm"; then
+  say "PHP ${PHP_VER} deposu (ppa:ondrej/php)"
+  if add_php_ppa && apt-get update -qq; then :; else
+    echo "UYARI: PHP ${PHP_VER} deposuna ulaşılamadı; Ubuntu'nun kendi PHP sürümü denenecek."
+    rm -f /etc/apt/sources.list.d/ondrej-php.list; apt-get update -qq
+  fi
+fi
+if ! has_pkg "php${PHP_VER}-fpm"; then
+  for v in 8.3 8.2; do if has_pkg "php${v}-fpm"; then PHP_VER=$v; break; fi; done
+  has_pkg "php${PHP_VER}-fpm" || die "PHP 8.2+ kurulamadı (Ubuntu 24.04 önerilir)."
+  echo "PHP ${PHP_VER} kullanılacak (uygulama 8.2+ ile çalışır)."
 fi
 apt-get install -y -qq "php${PHP_VER}-fpm" "php${PHP_VER}-cli" "php${PHP_VER}-mysql" "php${PHP_VER}-mbstring" \
   "php${PHP_VER}-intl" "php${PHP_VER}-gd" "php${PHP_VER}-xml" "php${PHP_VER}-curl" "php${PHP_VER}-zip" "php${PHP_VER}-bcmath" >/dev/null
@@ -60,12 +76,15 @@ expose_php = Off
 INI
 
 if ! command -v composer >/dev/null; then
-  say "Composer (imza doğrulamalı)"
-  EXPECTED="$(curl -fsSL https://composer.github.io/installer.sig)"
-  curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php
-  [ "$(php -r "echo hash_file('sha384', '/tmp/composer-setup.php');")" = "$EXPECTED" ] || die "Composer kurulum dosyası doğrulanamadı."
-  php /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
-  rm -f /tmp/composer-setup.php
+  say "Composer"
+  if EXPECTED="$(curl -fsSL https://composer.github.io/installer.sig)" && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php; then
+    [ "$(php -r "echo hash_file('sha384', '/tmp/composer-setup.php');")" = "$EXPECTED" ] || die "Composer kurulum dosyası doğrulanamadı."
+    php /tmp/composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
+    rm -f /tmp/composer-setup.php
+  else
+    echo "getcomposer.org'a ulaşılamadı; Ubuntu paketi kuruluyor."
+    apt-get install -y -qq composer >/dev/null
+  fi
 fi
 
 # --------------------------------------------------------------------- MySQL

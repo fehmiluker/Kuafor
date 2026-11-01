@@ -11,6 +11,7 @@
 | Yetki | Spatie Permission (teams = tenant) + Policy + sorgu kapsamı |
 | WhatsApp | Resmî Meta Cloud API adaptörü + sandbox (fake) modu |
 
+> **Online demo (VPS, ör. Hostinger):** [docs/vps-kurulum.md](docs/vps-kurulum.md) — tek komut: `DOMAIN=… EMAIL=… DEMO_PASS=… bash install.sh`.
 > **Online demo (cPanel):** [docs/cpanel-kurulum.md](docs/cpanel-kurulum.md) — `bash deploy/cpanel/install.sh`, sonra `php artisan kuafor:check --demo`.
 
 ## Hızlı başlangıç
@@ -74,6 +75,7 @@ Ayrıca: Pint temiz, `npm run build` başarılı, Playwright ile mobil tarayıc�
 | [api.md](docs/api.md) | Uçlar, örnekler, hata kodları, yetki matrisi |
 | [whatsapp.md](docs/whatsapp.md) | Meta Cloud API akışları, güvenlik, canlıya alma listesi |
 | [security.md](docs/security.md) | RBAC, uygulama güvenliği, KVKK (hukuki doğrulama gereken maddeler) |
+| [vps-kurulum.md](docs/vps-kurulum.md) | **VPS (Hostinger) demo kurulumu tek komutla**: Nginx, PHP, MySQL, kuyruk, cron, HTTPS, site şifresi |
 | [paytr-netgsm.md](docs/paytr-netgsm.md) | PayTR abonelik ödemesi ve Netgsm SMS kurulumu, test listesi |
 | [cpanel-kurulum.md](docs/cpanel-kurulum.md) | **cPanel demo kurulumu adım adım** (Node.js gerekmez), demo hesapları, kurulum sonrası test listesi |
 | [deployment.md](docs/deployment.md) | VPS kurulumu, Nginx/PHP-FPM, kuyruk, zamanlayıcı, yedek/geri yükleme |
