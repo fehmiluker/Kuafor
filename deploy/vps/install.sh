@@ -89,7 +89,7 @@ fi
 
 # --------------------------------------------------------------------- MySQL
 say "MySQL veritabanı"
-svc start mysql
+svc start mysql || true        # already running is fine; the query below fails loudly if not
 MYSQL_VERSION="$(mysql -N -e 'SELECT VERSION()')"
 case "$MYSQL_VERSION" in 8.*) ;; *) die "MySQL 8 gerekli (bulunan: $MYSQL_VERSION). MariaDB desteklenmez." ;; esac
 if [ -f "$APP_DIR/.env" ] && grep -q '^DB_PASSWORD=.\+' "$APP_DIR/.env"; then
@@ -213,7 +213,7 @@ ln -sf /etc/nginx/sites-available/kuafor.conf /etc/nginx/sites-enabled/kuafor.co
 rm -f /etc/nginx/sites-enabled/default
 nginx -t -q
 svc restart "php${PHP_VER}-fpm"
-svc reload nginx || svc restart nginx
+svc restart nginx   # restart (not reload) also starts it if it was never running
 
 # --------------------------------------------------------------------- kuyruk + zamanlayıcı
 say "Kuyruk işçisi (supervisor) ve zamanlayıcı (cron)"
@@ -232,7 +232,7 @@ stopwaitsecs=60
 redirect_stderr=true
 stdout_logfile=/var/log/kuafor/worker.log
 SUP
-svc start supervisor
+svc start supervisor || true   # already running is fine
 supervisorctl reread >/dev/null && supervisorctl update >/dev/null
 supervisorctl restart 'kuafor-worker:*' >/dev/null 2>&1 || true
 echo "* * * * * www-data cd ${APP_DIR} && php artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/kuafor
@@ -240,7 +240,13 @@ chmod 644 /etc/cron.d/kuafor
 
 # --------------------------------------------------------------------- güvenlik duvarı + HTTPS
 say "Güvenlik duvarı (SSH, HTTP, HTTPS)"
-ufw allow OpenSSH >/dev/null && ufw allow 'Nginx Full' >/dev/null && ufw --force enable >/dev/null || echo "UYARI: ufw etkinleştirilemedi."
+# SSH first, so enabling the firewall can never lock you out.
+if ufw app info OpenSSH >/dev/null 2>&1; then SSH_RULE=OpenSSH; else SSH_RULE=22/tcp; fi
+if ufw allow "$SSH_RULE" >/dev/null && ufw allow 80/tcp >/dev/null && ufw allow 443/tcp >/dev/null; then
+  ufw --force enable >/dev/null || echo "UYARI: ufw etkinleştirilemedi."
+else
+  echo "UYARI: ufw kuralları eklenemedi; güvenlik duvarı açılmadı."
+fi
 
 if [ -n "$DOMAIN" ] && [ -n "$EMAIL" ]; then
   say "HTTPS sertifikası (Let's Encrypt): $DOMAIN"
