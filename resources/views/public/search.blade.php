@@ -8,7 +8,7 @@
 @section('description', ($place ?: 'Türkiye').' bölgesindeki '.($catName ? mb_strtolower($catName) : 'kuaför ve güzellik').' salonları: fiyatlar, yorumlar ve online randevu.')
 @section('canonical', url()->current())
 @section('content')
-<div class="rounded-3xl bg-gradient-to-r from-violet-100 via-fuchsia-50 to-white p-6 ring-1 ring-violet-100"><p class="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600">Salonları keşfet</p><h1 class="text-2xl font-extrabold text-violet-950 sm:text-3xl">{{ ucfirst($heading) }}</h1><p class="mt-2 text-sm text-violet-700">Size uygun salonu bulun, hizmetleri karşılaştırın ve randevunuzu oluşturun.</p></div>
+<div class="rounded-3xl bg-gradient-to-r from-violet-100 via-fuchsia-50 to-white p-6 ring-1 ring-slate-200"><p class="mb-2 text-xs font-bold uppercase tracking-widest text-violet-600">Salonları keşfet</p><h1 class="text-2xl font-extrabold text-slate-900 sm:text-3xl">{{ ucfirst($heading) }}</h1><p class="mt-2 text-sm text-violet-700">Size uygun salonu bulun, hizmetleri karşılaştırın ve randevunuzu oluşturun.</p></div>
 <div class="mt-4 grid gap-6 lg:grid-cols-[18rem_1fr]">
     <form method="GET" action="{{ url()->current() }}" class="card h-fit space-y-4 p-5 lg:sticky lg:top-20" aria-label="Filtreler">
         <div>
