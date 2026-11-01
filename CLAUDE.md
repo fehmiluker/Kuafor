@@ -55,7 +55,8 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 
 ### Entegrasyonlar (arayüz + sahte/yerel uygulama)
 - WhatsApp: `WhatsAppClientInterface` → `MetaCloudApiClient` / `FakeWhatsAppClient` (`WHATSAPP_PROVIDER_MODE=fake|meta`). Hibrit numara modeli (platform numarası varsayılan, şube kendi numarası opsiyonel) — ADR-013, `docs/whatsapp.md`. Webhook'lar `routes/webhooks.php` (CSRF muaf, imza doğrulamalı).
-- SMS: `SmsProviderInterface` (yalnızca `log`). Abonelik tahsilatı: `PaymentGatewayInterface` (yalnızca `manual`, otomatik tahsilat yok).
+- SMS: `SmsProviderInterface` → `LogSmsProvider` / `NetgsmSmsProvider` (`SMS_PROVIDER=log|netgsm`).
+- Abonelik tahsilatı: `PaymentGatewayInterface` → `ManualPaymentGateway` / `PaytrPaymentGateway` (`SUBSCRIPTION_PAYMENT_PROVIDER=manual|paytr`). PayTR `HostedCheckoutGateway`'dir: `CheckoutService` `subscription_checkouts` kaydı + iFrame token oluşturur; sonuç yalnızca imzalı callback'ten (`/webhooks/subscription-payments/paytr`, cevap düz `OK`) gelir, tutar checkout kaydından alınır. Tekrarlayan çekim yok. Ayrıntı: `docs/paytr-netgsm.md`.
 - Abonelik hakları `entitlements_snapshot`'tan okunur (ADR-007): `EntitlementService`, `subscribed` / `feature` middleware'leri, `PlanLimitException`.
 
 ### Zaman ve para

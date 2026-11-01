@@ -74,6 +74,7 @@ Ayrıca: Pint temiz, `npm run build` başarılı, Playwright ile mobil tarayıc�
 | [api.md](docs/api.md) | Uçlar, örnekler, hata kodları, yetki matrisi |
 | [whatsapp.md](docs/whatsapp.md) | Meta Cloud API akışları, güvenlik, canlıya alma listesi |
 | [security.md](docs/security.md) | RBAC, uygulama güvenliği, KVKK (hukuki doğrulama gereken maddeler) |
+| [paytr-netgsm.md](docs/paytr-netgsm.md) | PayTR abonelik ödemesi ve Netgsm SMS kurulumu, test listesi |
 | [cpanel-kurulum.md](docs/cpanel-kurulum.md) | **cPanel demo kurulumu adım adım** (Node.js gerekmez), demo hesapları, kurulum sonrası test listesi |
 | [deployment.md](docs/deployment.md) | VPS kurulumu, Nginx/PHP-FPM, kuyruk, zamanlayıcı, yedek/geri yükleme |
 | [test-plan.md](docs/test-plan.md) | Senaryolar ve sınırlar |
@@ -85,6 +86,6 @@ Dağıtım dosyaları: `deploy/` (nginx, supervisor, systemd, backup/restore/dep
 | Entegrasyon | Bu teslimatta | Canlı için |
 |---|---|---|
 | WhatsApp | Hibrit: platform numarası (varsayılan, salon ayar yapmaz) + isteğe bağlı kendi numarası ("WhatsApp'ı bağla"). `fake` modu: gerçek mesaj yok; tüm akışlar testli | Meta işletme doğrulaması, App Review, numara kaydı, şablon onayı, `WHATSAPP_PROVIDER_MODE=meta` — [checklist](docs/whatsapp.md#canlıya-alma-kontrol-listesi) |
-| SMS (OTP) | `log` sağlayıcı | `SmsProviderInterface` için sağlayıcı adaptörü |
+| SMS (OTP) | `log` (varsayılan) veya **Netgsm** (`SMS_PROVIDER=netgsm`) | Netgsm API kullanıcısı + onaylı başlık — [kurulum](docs/paytr-netgsm.md#2-netgsm--sms-telefon-doğrulama-kodları) |
 | E-posta | `log`/SMTP | SMTP bilgileri |
-| Abonelik tahsilatı | `manual` (yönetici aktivasyonu + imzalı webhook), otomatik kart tahsilatı **yok** | `PaymentGatewayInterface` için iyzico/PayTR vb. adaptör |
+| Abonelik tahsilatı | `manual` (yönetici aktivasyonu) veya **PayTR** iFrame ile salon sahibinin kartla ödemesi (`SUBSCRIPTION_PAYMENT_PROVIDER=paytr`); otomatik/tekrarlayan çekim **yok** | PayTR mağaza bilgileri + Bildirim URL — [kurulum](docs/paytr-netgsm.md#1-paytr--kartla-abonelik-ödemesi) |

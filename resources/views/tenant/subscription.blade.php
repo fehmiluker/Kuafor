@@ -13,7 +13,21 @@
     </div>
     <p class="mt-3 text-sm">Kullanım: {{ $usage['branches']['used'] }}/{{ $usage['branches']['limit'] }} şube · {{ $usage['employees']['used'] }}/{{ $usage['employees']['limit'] }} personel</p>
     @if($overLimit['branches'] || $overLimit['employees'])<p class="mt-2 rounded bg-red-50 p-3 text-sm text-red-900" role="alert">Limit aşımı: {{ $overLimit['branches'] }} şube, {{ $overLimit['employees'] }} personel pasifleştirilmeli. Verileriniz korunur.</p>@endif
-    <p class="mt-3 rounded bg-slate-50 p-3 text-sm text-slate-700">Ödeme şu anda manuel aktivasyon ile alınmaktadır (havale/fatura). Ödemeniz onaylandığında aboneliğiniz aktifleşir. Platform otomatik kart tahsilatı yapmaz.</p>
+    @if(request('odeme') === 'tamamlandi')
+        <p class="mt-3 rounded bg-emerald-50 p-3 text-sm text-emerald-900" role="status">Ödemeniz alındı. Sağlayıcı onayı birkaç saniye içinde gelir; durum güncellenmediyse sayfayı yenileyin.</p>
+    @elseif(request('odeme') === 'basarisiz')
+        <p class="mt-3 rounded bg-red-50 p-3 text-sm text-red-900" role="alert">Ödeme tamamlanamadı. Kart bilgilerinizi kontrol edip yeniden deneyebilirsiniz.</p>
+    @endif
+    @if($cardPayment)
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded bg-slate-50 p-3 text-sm text-slate-700">
+            <p>Sonraki dönem: <strong>{{ $nextAmount->format() }}</strong> (KDV dahil). Kredi/banka kartıyla PayTR güvenli ödeme sayfasından ödeyebilirsiniz. Her dönem ayrıca ödenir; kartınızdan otomatik çekim yapılmaz.</p>
+            @if($canManage)
+                <form method="POST" action="{{ route('tenant.subscription.pay') }}">@csrf<button class="btn-primary">Kartla öde</button></form>
+            @endif
+        </div>
+    @else
+        <p class="mt-3 rounded bg-slate-50 p-3 text-sm text-slate-700">Ödeme şu anda manuel aktivasyon ile alınmaktadır (havale/fatura). Ödemeniz onaylandığında aboneliğiniz aktifleşir. Platform otomatik kart tahsilatı yapmaz.</p>
+    @endif
 </section>
 @endif
 <h2 class="mt-6 mb-3 font-semibold">Paketler</h2>

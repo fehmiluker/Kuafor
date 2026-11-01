@@ -12,7 +12,10 @@ use App\Models\Plan;
 use App\Models\Review;
 use App\Models\TenantMedia;
 use App\Services\Audit\AuditLogger;
+use App\Services\Billing\CheckoutService;
 use App\Services\Billing\EntitlementService;
+use App\Services\Billing\HostedCheckoutGateway;
+use App\Services\Billing\PaymentGatewayInterface;
 use App\Services\Billing\SubscriptionService;
 use App\Services\Booking\BookingSettings;
 use App\Services\Catalog\TenantCatalogService;
@@ -195,14 +198,19 @@ class PanelController extends PanelBaseController
         return back()->with('status', 'Görsel yüklendi.');
     }
 
-    public function subscription(EntitlementService $entitlements): View
+    public function subscription(Request $request, EntitlementService $entitlements, PaymentGatewayInterface $gateway, CheckoutService $checkouts): View
     {
         $tenant = $this->tenant();
+        $subscription = $entitlements->subscription($tenant)?->load(['plan.features', 'pendingPlan', 'invoices']);
+        $cardPayment = $subscription && $gateway instanceof HostedCheckoutGateway && $checkouts->canPay($subscription);
 
         return view('tenant.subscription', [
-            'subscription' => $entitlements->subscription($tenant)?->load(['plan.features', 'pendingPlan', 'invoices']),
+            'subscription' => $subscription,
             'plans' => Plan::with('features')->where('active', true)->where('public', true)->orderBy('sort_order')->get(),
             'usage' => $entitlements->usage($tenant), 'overLimit' => $entitlements->overLimit($tenant),
+            'cardPayment' => $cardPayment,
+            'nextAmount' => $cardPayment ? $checkouts->nextChargeAmount($subscription) : null,
+            'canManage' => $this->allows($request, 'subscriptions.manage'),
         ]);
     }
 

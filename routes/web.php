@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Public\PublicController;
 use App\Http\Controllers\Web\Tenant\PanelAppointmentController;
 use App\Http\Controllers\Web\Tenant\PanelCatalogController;
 use App\Http\Controllers\Web\Tenant\PanelController;
+use App\Http\Controllers\Web\Tenant\SubscriptionPaymentController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Livewire\Public\BookingWizard;
 use Illuminate\Support\Facades\Route;
@@ -126,6 +127,8 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::post('ayarlar/medya', [PanelController::class, 'uploadMedia'])->name('settings.media');
         Route::get('abonelik', [PanelController::class, 'subscription'])->withoutMiddleware('subscribed')->name('subscription');
         Route::post('abonelik', [PanelController::class, 'changePlan'])->withoutMiddleware('subscribed')->name('subscription.change');
+        Route::post('abonelik/odeme', [SubscriptionPaymentController::class, 'start'])->withoutMiddleware('subscribed')->middleware('throttle:10,1')->name('subscription.pay');
+        Route::get('abonelik/odeme/{oid}', [SubscriptionPaymentController::class, 'show'])->withoutMiddleware('subscribed')->where('oid', '[A-Za-z0-9]+')->name('subscription.pay.show');
     });
 
     // ------------------------------------------------------------ super admin
