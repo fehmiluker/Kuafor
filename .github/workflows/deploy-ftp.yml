@@ -1,0 +1,68 @@
+name: Deploy (FTP)
+
+# Uploads the application to the cPanel host over FTPS on every push to main.
+# Only files are uploaded: no SSH, so composer/migrate/optimize are NOT run here.
+# - .env, storage/ runtime data and bootstrap/cache are never uploaded (kept on the server).
+# - After a deploy that contains new migrations, run them from cPanel (see notes below).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ftp
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, gd, pdo_mysql, bcmath, zip
+          tools: composer:v2
+
+      # vendor/ is gitignored, so install production dependencies on the runner.
+      - name: Install PHP dependencies (no-dev)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      # public/build is committed (hosting needs no Node.js), so no npm step here.
+
+      - name: Upload via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./
+          # Path relative to the FTP login root. The app lives in ~/kuafor on the server.
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            deploy/**
+            docs/**
+            tests/**
+            node_modules/**
+            .env
+            .env.*
+            .phpunit.cache/**
+            .phpunit.result.cache
+            storage/app/**
+            storage/logs/**
+            storage/framework/cache/**
+            storage/framework/sessions/**
+            storage/framework/views/**
+            storage/framework/testing/**
+            storage/pail/**
+            bootstrap/cache/*.php
+            **/*.log
+            **/.DS_Store
+            **/Thumbs.db
