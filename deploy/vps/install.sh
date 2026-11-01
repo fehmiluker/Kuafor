@@ -162,6 +162,8 @@ as_web php artisan optimize >/dev/null
 # --------------------------------------------------------------------- nginx
 say "Nginx"
 AUTH=""
+LISTEN6=""
+[ -e /proc/net/if_inet6 ] && LISTEN6="listen [::]:80 default_server;"
 if [ -n "$DEMO_PASS" ]; then
   htpasswd -bc /etc/nginx/kuafor.htpasswd "$DEMO_USER" "$DEMO_PASS" >/dev/null 2>&1
   chown root:www-data /etc/nginx/kuafor.htpasswd && chmod 640 /etc/nginx/kuafor.htpasswd
@@ -170,7 +172,7 @@ fi
 cat > /etc/nginx/sites-available/kuafor.conf <<NGINX
 server {
     listen 80 default_server;
-    listen [::]:80 default_server;
+    ${LISTEN6}
     server_name ${DOMAIN:-_};
     root ${APP_DIR}/public;   # document root = public/ only
     index index.php;
