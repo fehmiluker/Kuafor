@@ -126,6 +126,17 @@ final class Money implements JsonSerializable, Stringable
         return ($this->minor < 0 ? '-' : '')."{$int},{$dec} {$symbol}";
     }
 
+    /** Compact display for cards: "₺650", "₺1.800", "₺99,90" (kuruş only when non-zero). */
+    public function short(): string
+    {
+        $abs = abs($this->minor);
+        $int = number_format(intdiv($abs, 100), 0, ',', '.');
+        $cents = $abs % 100 ? ','.str_pad((string) ($abs % 100), 2, '0', STR_PAD_LEFT) : '';
+        $symbol = $this->currency === 'TRY' ? '₺' : $this->currency.' ';
+
+        return ($this->minor < 0 ? '-' : '').$symbol.$int.$cents;
+    }
+
     public function jsonSerialize(): array
     {
         return ['amount' => $this->toDecimal(), 'currency' => $this->currency, 'formatted' => $this->format()];

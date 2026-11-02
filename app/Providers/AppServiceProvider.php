@@ -6,6 +6,7 @@ use App\Listeners\SendAppointmentNotifications;
 use App\Services\Billing\ManualPaymentGateway;
 use App\Services\Billing\PaymentGatewayInterface;
 use App\Services\Billing\PaytrPaymentGateway;
+use App\Services\Catalog\SalonCards;
 use App\Services\Sms\LogSmsProvider;
 use App\Services\Sms\NetgsmSmsProvider;
 use App\Services\Sms\SmsProviderInterface;
@@ -30,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         // scoped(): reset between requests and between queue jobs (Octane/queue safe).
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(AccessScope::class);
+        $this->app->scoped(SalonCards::class);
 
         $this->app->singleton(WhatsAppClientInterface::class, fn () => config('whatsapp.mode') === 'meta'
             ? new MetaCloudApiClient

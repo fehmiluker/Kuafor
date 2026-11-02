@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Proje
-Kuaför/güzellik salonları için çok işletmeli (multi-tenant) SaaS randevu platformu. Laravel 12 monolit · PHP 8.4 hedef (8.3+) · MySQL 8 · Blade + Livewire 3 (Alpine) · Tailwind 4 + Vite · FullCalendar 6 · REST API v1 (Sanctum). Arayüz metinleri ve dokümanlar Türkçe; kod ve kod yorumları İngilizce.
+Kuaför/güzellik salonları için çok işletmeli (multi-tenant) SaaS randevu platformu. Laravel 12 monolit (kurumsal lacivert tema) · PHP 8.4 hedef (8.3+) · MySQL 8 · Blade + Livewire 3 (Alpine) · Tailwind 4 + Vite · FullCalendar 6 · REST API v1 (Sanctum). Arayüz metinleri ve dokümanlar Türkçe; kod ve kod yorumları İngilizce.
 
 **Müşteriden online ödeme/kapora alınmaz** — `appointment_payments` yalnızca kayıttır; kartla ödeme yalnızca salon sahibinin platform aboneliği içindir (PayTR). Ayrıntılı belgeler `docs/` altında (architecture, decisions/ADR, erd, api, security, whatsapp, paytr-netgsm, cpanel-kurulum, deployment, test-plan).
 
@@ -66,6 +66,8 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 - Abonelik hakları `entitlements_snapshot`'tan okunur (ADR-007): `EntitlementService`, `subscribed` / `feature` middleware'leri, `PlanLimitException`.
 - Sağlayıcılar `AppServiceProvider::register` içinde config'e göre **singleton** bağlanır. Sağlayıcı HTTP hataları (`HttpClientException`) log'a yazılır, kullanıcıya `DomainRuleException` ile genel mesaj gösterilir.
 - Reklamlar (sponsor banner): platform düzeyi `AdCampaign` (tenant'sız), `Services/Ads/AdService::pick($placement, $cityId)` (şehre özel > genel, `weight` ile rastgele), Blade `<x-ad-slot placement="panel_dashboard|home|search" />`. Kendi barındırdığımız görseller: üçüncü taraf reklam kodu/çerez yok (CSP ve KVKK için bilinçli). Tıklama `/reklam/{id}` → sayaç + DB'deki adrese yönlendirme (açık yönlendirme yok). Yönetim: `/admin/reklamlar` (`platform.settings`). Her bannerda "Reklam" etiketi zorunlu; salon profil sayfasına ve randevu sihirbazına reklam konmaz.
+- Tema: kurumsal lacivert. Renkler `resources/css/app.css` `@theme` içindeki `brand-*` paletinden gelir; görünümlerde `violet/fuchsia` gibi sabit renk yerine `brand-*` kullanın. Ana sayfa kategori kutuları `.cat-tile` + `.tone-k1..k5`.
+- Müşteri ana sayfası: konum seçici (`/konum`, çerez `konum` = `il-slug/ilce-slug`, `Support/VisitorLocation`), "Size yakın salonlar" seçilen ilçe/ile göre `SalonSearchService` ile. Salon kartı (`public/_salon-card`) etiket ve favorileri sayfa başına tek sorguda `Services/Catalog/SalonCards` (scoped) ile alır; listeleyen controller `->prime($tenants)` çağırır. Mobilde alt menü `layouts/public` içinde. Ana sayfa görselleri `public/images/home/*` (kullanıcının tasarım görselinden; lisanslı/yüksek çözünürlüklü görsellerle değiştirilebilir).
 - CSP `Http/Middleware/SecurityHeaders::policy($extraOrigins)` ile üretilir; harici bir alan adı (ör. PayTR) yalnızca ihtiyaç duyan sayfanın cevabına eklenir, global politikaya değil.
 
 ### Zaman ve para

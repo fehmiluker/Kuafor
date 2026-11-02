@@ -30,7 +30,7 @@
                     @if($st === 'pending')<form method="POST" action="{{ route('tenant.appointments.act', [$a, 'onayla']) }}">@csrf<button class="btn-primary">Onayla</button></form>@endif
                     <form method="POST" action="{{ route('tenant.appointments.act', [$a, 'reddet']) }}" onsubmit="return confirm('Talep reddedilsin mi?')">@csrf<button class="btn-secondary">Reddet</button></form>
                 </div>
-                @if($a->openProposal)<p class="rounded bg-violet-50 p-3 text-sm text-violet-900">Açık teklif: <x-local-time :at="$a->openProposal->proposed_start_utc" :tz="$tz" format="d M D H:i" /> (geçerlilik: <x-local-time :at="$a->openProposal->expires_at_utc" :tz="$tz" format="d M H:i" />). Yeni teklif gönderirseniz bu teklif geri çekilir.</p>@endif
+                @if($a->openProposal)<p class="rounded bg-brand-50 p-3 text-sm text-brand-900">Açık teklif: <x-local-time :at="$a->openProposal->proposed_start_utc" :tz="$tz" format="d M D H:i" /> (geçerlilik: <x-local-time :at="$a->openProposal->expires_at_utc" :tz="$tz" format="d M H:i" />). Yeni teklif gönderirseniz bu teklif geri çekilir.</p>@endif
                 <div>
                     <h3 class="text-sm font-semibold">Başka saat öner</h3>
                     @if($suggestions)

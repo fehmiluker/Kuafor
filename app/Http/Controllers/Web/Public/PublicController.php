@@ -13,26 +13,59 @@ use App\Models\ServiceCategory;
 use App\Models\Tenant;
 use App\Models\TenantMedia;
 use App\Services\Catalog\PublicCatalog;
+use App\Services\Catalog\SalonCards;
 use App\Services\Search\SalonSearchService;
+use App\Support\Money;
+use App\Support\VisitorLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class PublicController extends Controller
 {
-    public function home(): View
+    /** Category tiles on the home page: label => platform category slug + icon key. */
+    public const HOME_CATEGORIES = [
+        ['label' => 'Kuaför', 'slug' => 'sac-kesim', 'icon' => 'scissors', 'tone' => 'k1'],
+        ['label' => 'Berber', 'slug' => 'sakal', 'icon' => 'razor', 'tone' => 'k2'],
+        ['label' => 'Güzellik', 'slug' => 'cilt-bakimi', 'icon' => 'face', 'tone' => 'k3'],
+        ['label' => 'Tırnak', 'slug' => 'manikur-pedikur', 'icon' => 'polish', 'tone' => 'k4'],
+        ['label' => 'Makyaj', 'slug' => 'makyaj', 'icon' => 'brush', 'tone' => 'k5'],
+    ];
+
+    /** "Popüler hizmetler" cards: platform category slug => [title, image]. */
+    public const POPULAR_SERVICES = [
+        'sac-kesim' => ['Saç Kesimi', 'images/home/sac-kesim.jpg'],
+        'sac-boya' => ['Saç Boyama', 'images/home/sac-boya.jpg'],
+        'sakal' => ['Erkek Bakımı', 'images/home/sakal.jpg'],
+    ];
+
+    public function home(Request $request, SalonSearchService $search, SalonCards $cards): View
     {
-        $featured = Tenant::query()->publiclyListed()->whereNotNull('rating_avg')
-            ->with(['branches' => fn ($q) => $q->where('status', 'active')->with(['city', 'district'])])
-            ->orderByDesc('rating_avg')->orderByDesc('rating_count')->limit(6)->get();
-        if ($featured->isEmpty()) {
-            $featured = Tenant::query()->publiclyListed()->with(['branches' => fn ($q) => $q->where('status', 'active')->with(['city', 'district'])])->latest()->limit(6)->get();
+        $withBranches = ['branches' => fn ($q) => $q->where('status', 'active')->with(['city', 'district'])];
+        $featured = Tenant::query()->publiclyListed()->whereNotNull('rating_avg')->with($withBranches)
+            ->orderByDesc('rating_avg')->orderByDesc('rating_count')->limit(4)->get();
+        if ($featured->count() < 4) {
+            $featured = $featured->concat(Tenant::query()->publiclyListed()->whereNotIn('id', $featured->pluck('id'))
+                ->with($withBranches)->latest()->limit(4 - $featured->count())->get());
         }
+
+        $location = VisitorLocation::fromRequest($request);
+        $nearby = $location->isSet()
+            ? $search->search(['city' => $location->city->slug, 'district' => $location->district?->slug, 'sort' => 'rating'], 4)->getCollection()
+            : collect();
+        $cards->prime($featured->concat($nearby));
+
+        $prices = $cards->minPrices(array_keys(self::POPULAR_SERVICES));
 
         return view('public.home', [
             'featured' => $featured,
-            'categories' => ServiceCategory::whereNull('tenant_id')->where('status', 'active')->orderBy('sort_order')->get(),
-            'cities' => City::orderBy('name')->get(['id', 'name', 'slug']),
+            'nearby' => $nearby,
+            'location' => $location,
+            'popular' => collect(self::POPULAR_SERVICES)->map(fn ($v, $slug) => [
+                'slug' => $slug, 'title' => $v[0], 'image' => asset($v[1]),
+                'price' => isset($prices[$slug]) ? Money::parse((string) $prices[$slug]) : null,
+            ])->values(),
+            'tiles' => self::HOME_CATEGORIES,
         ]);
     }
 
@@ -54,6 +87,8 @@ class PublicController extends Controller
             'service' => $f['hizmet'] ?? null, 'q' => $f['q'] ?? null, 'date' => $f['tarih'] ?? null, 'time' => $f['saat'] ?? null,
             'min_price' => $f['min'] ?? null, 'max_price' => $f['max'] ?? null, 'sort' => $f['sirala'] ?? 'rating',
         ]);
+
+        app(SalonCards::class)->prime($results->getCollection());
 
         return view('public.search', [
             'results' => $results, 'filters' => $f, 'city' => $cityModel, 'district' => $districtModel,

@@ -6,12 +6,17 @@
 
 @theme {
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-    --color-brand-50: #faf5ff;
-    --color-brand-100: #f3e8ff;
-    --color-brand-500: #8b5cf6;
-    --color-brand-600: #7c3aed;
-    --color-brand-700: #6d28d9;
-    --color-brand-900: #3b0764;
+    /* Corporate navy */
+    --color-brand-50: #eef2f9;
+    --color-brand-100: #dbe4f3;
+    --color-brand-200: #bccbe6;
+    --color-brand-300: #8ea7d4;
+    --color-brand-400: #5b7cbc;
+    --color-brand-500: #2f55a4;
+    --color-brand-600: #1e3a8a;
+    --color-brand-700: #14306b;
+    --color-brand-800: #0f2655;
+    --color-brand-900: #0b1d44;
 }
 
 @utility btn {
@@ -44,14 +49,26 @@
 .fc .fc-toolbar-title { font-size: 1.1rem; }
 .fc .fc-event { cursor: pointer; }
 
-/* Modern violet design system — customer and tenant surfaces */
+/* Corporate navy design system — customer and tenant surfaces */
 @layer components {
-  .btn-primary { @apply rounded-full bg-violet-600 shadow-sm hover:bg-violet-700; }
-  .btn-secondary { @apply rounded-full border-violet-100 hover:bg-violet-50; }
+  .btn-primary { @apply rounded-full bg-brand-600 shadow-sm hover:bg-brand-700; }
+  .btn-secondary { @apply rounded-full border-brand-100 hover:bg-brand-50; }
   .card { @apply rounded-2xl border border-slate-200 shadow-sm; }
-  .input { @apply rounded-xl focus:ring-violet-500; }
-  .nav-link { @apply rounded-xl hover:bg-violet-50 hover:text-violet-700; }
-  .nav-link-active { @apply bg-violet-100 text-violet-800; }
-  .chip { @apply rounded-full border-slate-200 bg-white text-slate-700 hover:bg-violet-50; }
-  .chip-active { @apply bg-violet-600 text-white; }
+  .input { @apply rounded-xl focus:ring-brand-500; }
+  .nav-link { @apply rounded-xl hover:bg-brand-50 hover:text-brand-700; }
+  .nav-link-active { @apply bg-brand-100 text-brand-800; }
+  .chip { @apply rounded-full border-slate-200 bg-white text-slate-700 hover:bg-brand-50; }
+  .chip-active { @apply bg-brand-600 text-white; }
+}
+
+/* Home category tiles: square, white, one muted corporate colour each */
+@layer components {
+  .tone-k1 { --c: #1e3a8a; --t: #e8eefb; }
+  .tone-k2 { --c: #0f766e; --t: #e3f3f1; }
+  .tone-k3 { --c: #9d174d; --t: #fbe9f1; }
+  .tone-k4 { --c: #b45309; --t: #fdf0e1; }
+  .tone-k5 { --c: #15803d; --t: #e6f4ea; }
+  .cat-tile { @apply flex aspect-square flex-col items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white text-[13px] font-semibold text-slate-900 shadow-sm transition sm:text-[15px]; border-bottom: 3px solid var(--c); }
+  .cat-tile:hover { border-color: var(--c); }
+  .cat-ico { @apply grid h-10 w-10 place-items-center rounded-[10px] sm:h-12 sm:w-12; background: var(--t); color: var(--c); }
 }
