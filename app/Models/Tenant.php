@@ -18,13 +18,14 @@ class Tenant extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $guarded = ['id', 'rating_avg', 'rating_count', 'status', 'suspended_at', 'suspension_reason', 'owner_user_id'];
+    protected $guarded = ['id', 'rating_avg', 'rating_count', 'status', 'suspended_at', 'suspension_reason', 'owner_user_id', 'is_showcase'];
 
     protected function casts(): array
     {
         return [
             'status' => TenantStatus::class,
             'public_listing_enabled' => 'boolean',
+            'is_showcase' => 'boolean',
             'settings' => 'array',
             'tax_info' => 'encrypted',
             'rating_avg' => 'decimal:2',
@@ -99,9 +100,11 @@ class Tenant extends Model
     }
 
     /** Tenants that may receive bookings via direct link. */
-    public function scopeBookable(Builder $q): Builder
+    /** Can take bookings. Showcase ("örnek") salons are only viewable: pass true to include them (salon page). */
+    public function scopeBookable(Builder $q, bool $includeShowcase = false): Builder
     {
         return $q->where('tenants.status', TenantStatus::Active->value)
+            ->when(! $includeShowcase, fn ($w) => $w->where('tenants.is_showcase', false))
             ->whereExists(fn ($s) => $s->from('subscriptions')
                 ->whereColumn('subscriptions.tenant_id', 'tenants.id')
                 ->whereIn('subscriptions.status', SubscriptionStatus::usable()));

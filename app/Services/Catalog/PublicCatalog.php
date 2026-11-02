@@ -25,6 +25,12 @@ final class PublicCatalog
         return Tenant::query()->bookable()->where('slug', $slug)->first();
     }
 
+    /** Salon profile page: bookable salons plus showcase ("örnek") salons, which are view-only. */
+    public function viewableTenant(string $slug): ?Tenant
+    {
+        return Tenant::query()->bookable(includeShowcase: true)->where('slug', $slug)->first();
+    }
+
     /** Public branch lookup: active branch of a bookable tenant. */
     public function bookableBranch(int $branchId): ?Branch
     {

@@ -43,10 +43,10 @@ class PublicController extends Controller
     {
         $withBranches = ['branches' => fn ($q) => $q->where('status', 'active')->with(['city', 'district'])];
         $featured = Tenant::query()->publiclyListed()->whereNotNull('rating_avg')->with($withBranches)
-            ->orderByDesc('rating_avg')->orderByDesc('rating_count')->limit(4)->get();
+            ->orderBy('is_showcase')->orderByDesc('rating_avg')->orderByDesc('rating_count')->limit(4)->get();
         if ($featured->count() < 4) {
             $featured = $featured->concat(Tenant::query()->publiclyListed()->whereNotIn('id', $featured->pluck('id'))
-                ->with($withBranches)->latest()->limit(4 - $featured->count())->get());
+                ->with($withBranches)->orderBy('is_showcase')->latest()->limit(4 - $featured->count())->get());
         }
 
         $location = VisitorLocation::fromRequest($request);
@@ -100,7 +100,7 @@ class PublicController extends Controller
 
     public function salon(Request $request, string $slug, PublicCatalog $catalog): View
     {
-        $tenant = $catalog->bookableTenant($slug) ?? abort(404);
+        $tenant = $catalog->viewableTenant($slug) ?? abort(404);
         $branches = $catalog->branches($tenant);
         $servicesByBranch = $branches->mapWithKeys(fn ($b) => [$b->id => $catalog->services($b)]);
         $employees = $branches->flatMap(fn ($b) => $catalog->employees($b))->unique('id')->values();

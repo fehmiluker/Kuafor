@@ -18,11 +18,16 @@
             </div>
         </div>
         <div class="flex gap-2">
-            @auth<form method="POST" action="{{ route('account.favorites.toggle', $tenant->slug) }}">@csrf<button class="btn-secondary" aria-pressed="{{ $isFavorite ? 'true' : 'false' }}">{{ $isFavorite ? '♥ Favorilerde' : '♡ Favorilere ekle' }}</button></form>@endauth
-            <a href="{{ route('salon.book', $tenant->slug) }}" class="btn-primary">Randevu al</a>
+            @unless($tenant->is_showcase)
+                @auth<form method="POST" action="{{ route('account.favorites.toggle', $tenant->slug) }}">@csrf<button class="btn-secondary" aria-pressed="{{ $isFavorite ? 'true' : 'false' }}">{{ $isFavorite ? '♥ Favorilerde' : '♡ Favorilere ekle' }}</button></form>@endauth
+                <a href="{{ route('salon.book', $tenant->slug) }}" class="btn-primary">Randevu al</a>
+            @endunless
         </div>
     </div>
 </div>
+@if($tenant->is_showcase)
+    <p class="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200" role="note"><strong>Örnek işletme.</strong> Bu sayfa platformun nasıl görüneceğini göstermek için hazırlanmıştır; bu işletmeden online randevu alınamaz. <a href="{{ route('search') }}" class="font-semibold underline">Randevu alabileceğiniz salonlara göz atın.</a></p>
+@endif
 
 <div class="mt-6 grid gap-6 lg:grid-cols-3">
     <div class="space-y-6 lg:col-span-2">
@@ -44,7 +49,7 @@
                         <li class="flex items-center justify-between gap-3 py-3">
                             <div><p class="font-medium">{{ $s->name }}</p><p class="text-xs text-slate-500">{{ $s->category?->name }} · {{ $s->effective_duration }} dk</p></div>
                             <div class="flex items-center gap-3"><span class="text-lg font-bold text-slate-900">{{ $s->effective_price->format() }}</span>
-                                <a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id, 'hizmet' => $s->id]) }}" class="btn-secondary btn-sm">Seç</a></div>
+                                @unless($tenant->is_showcase)<a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id, 'hizmet' => $s->id]) }}" class="btn-secondary btn-sm">Seç</a>@endunless</div>
                         </li>
                     @endforeach
                 </ul>
@@ -83,7 +88,7 @@
                         <div class="flex justify-between py-0.5"><dt>{{ \App\Models\WorkingHour::DAY_NAMES[$dow] }}</dt><dd class="text-slate-600">{{ $h->isEmpty() ? 'Kapalı' : $h->map(fn($x) => substr($x->starts_local,0,5).'–'.substr($x->ends_local,0,5))->implode(', ') }}</dd></div>
                     @endforeach
                 </dl>
-                <a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id]) }}" class="btn-primary mt-4 w-full">Bu şubeden randevu al</a>
+                @unless($tenant->is_showcase)<a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id]) }}" class="btn-primary mt-4 w-full">Bu şubeden randevu al</a>@endunless
             </section>
         @endforeach
         @if($employees->isNotEmpty())

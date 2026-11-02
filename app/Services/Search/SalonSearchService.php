@@ -69,6 +69,8 @@ final class SalonSearchService
                             ->orWhereIn('branches.city_id', DB::table('cities')->where('name', 'like', $like)->select('id')))));
             }
 
+            // Real salons always before showcase ("örnek") salons.
+            $q->orderBy('tenants.is_showcase');
             match ($f['sort'] ?? 'rating') {
                 'price_asc' => $q->orderByRaw('tenants.min_service_price IS NULL, tenants.min_service_price ASC'),
                 'price_desc' => $q->orderByDesc('tenants.min_service_price'),
