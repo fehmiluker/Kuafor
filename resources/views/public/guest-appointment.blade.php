@@ -21,7 +21,7 @@
         </dl>
         @if($a->status->value === 'pending')<p class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Talebiniz salon onayı bekliyor. Onaylandığında size bildirim gönderilecek.</p>@endif
         @if($a->status->value === 'alternative_proposed' && $a->openProposal)
-            <div class="mt-4 rounded-lg bg-violet-50 p-3 text-sm text-violet-900">
+            <div class="mt-4 rounded-lg bg-brand-50 p-3 text-sm text-brand-900">
                 Salon size <strong><x-local-time :at="$a->openProposal->proposed_start_utc" :tz="$tz" format="d F l H:i" /></strong> saatini önerdi.
                 Size gönderilen WhatsApp/e-posta bağlantısından kabul veya reddedebilirsiniz.
             </div>

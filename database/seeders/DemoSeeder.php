@@ -30,6 +30,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Demo data: 3 tenants on 3 plans, a multi-branch salon, employees, services,
@@ -138,6 +139,13 @@ class DemoSeeder extends Seeder
         // Tenant 2: a few confirmed upcoming bookings
         foreach (['10:00', '10:30', '11:00'] as $i => $time) {
             $svc->create($t2, new CreateAppointmentData($cankaya->id, [$mcut->id], null, CarbonImmutable::parse("$tomorrow $time", 'Europe/Istanbul')->utc(), 'Müşteri '.($i + 1), '+90555200000'.$i));
+        }
+
+        // Demo cover photos (placeholders; salons upload their own from Panel > Ayarlar).
+        foreach ([[$t1, 'salon-1.jpg'], [$t2, 'salon-2.jpg'], [$t3, 'salon-3.jpg']] as [$tenant, $file]) {
+            $path = "tenants/{$tenant->id}/media/demo-cover.jpg";
+            Storage::disk('public')->put($path, (string) file_get_contents(database_path('seeders/assets/demo/'.$file)));
+            $tenant->forceFill(['cover_path' => $path])->save();
         }
 
         $this->call(AdDemoSeeder::class);

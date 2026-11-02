@@ -8,7 +8,7 @@
     + ($branches->first()?->address ? ['address' => $branches->first()->address] : []); @endphp
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 <div class="overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-100/50 ring-1 ring-slate-200">
-    <div class="h-52 bg-gradient-to-br from-fuchsia-100 via-violet-100 to-indigo-100 sm:h-72" @if($tenant->cover_path) style="background-image:url('{{ Storage::disk('public')->url($tenant->cover_path) }}');background-size:cover;background-position:center" @endif role="img" aria-label="{{ $tenant->name }} kapak"></div>
+    <div class="h-52 bg-gradient-to-br from-brand-100 via-brand-100 to-indigo-100 sm:h-72" @if($tenant->cover_path) style="background-image:url('{{ Storage::disk('public')->url($tenant->cover_path) }}');background-size:cover;background-position:center" @endif role="img" aria-label="{{ $tenant->name }} kapak"></div>
     <div class="flex flex-col gap-5 p-6 sm:flex-row sm:items-end sm:justify-between">
         <div class="flex items-center gap-4">
             @if($tenant->logo_path)<img src="{{ Storage::disk('public')->url($tenant->logo_path) }}" alt="{{ $tenant->name }} logosu" class="-mt-14 h-20 w-20 rounded-xl bg-white object-cover ring-4 ring-white">@endif

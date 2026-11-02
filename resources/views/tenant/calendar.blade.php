@@ -1,7 +1,7 @@
 @extends('layouts.panel')
 @section('title', 'Takvim')
 @section('content')
-<div class="mb-5 rounded-3xl bg-gradient-to-r from-violet-100 to-fuchsia-50 p-5 ring-1 ring-slate-200"><h2 class="text-2xl font-extrabold text-slate-900">Randevu takvimi</h2><p class="mt-1 text-sm text-violet-700">Şube ve personel seçerek randevularınızı yönetin.</p></div>
+<div class="mb-5 rounded-3xl bg-gradient-to-r from-brand-100 to-brand-50 p-5 ring-1 ring-slate-200"><h2 class="text-2xl font-extrabold text-slate-900">Randevu takvimi</h2><p class="mt-1 text-sm text-brand-700">Şube ve personel seçerek randevularınızı yönetin.</p></div>
 <div class="mb-4 flex flex-wrap items-end gap-3">
     <form method="GET" class="flex items-end gap-2">
         <div><label for="c-branch" class="label">Şube</label><select id="c-branch" name="sube" class="input" onchange="this.form.submit()">@foreach($branches as $b)<option value="{{ $b->id }}" @selected($b->id === $branchId)>{{ $b->name }}</option>@endforeach</select></div>

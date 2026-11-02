@@ -31,9 +31,9 @@
 <body class="h-full font-sans text-slate-900 antialiased" x-data="{ open: false }">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2">İçeriğe geç</a>
 <div class="flex min-h-full bg-slate-50">
-    <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transform border-r border-violet-100 bg-white transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'" aria-label="İşletme menüsü">
+    <aside class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transform border-r border-brand-100 bg-white transition lg:static lg:translate-x-0" :class="open && 'translate-x-0'" aria-label="İşletme menüsü">
         <div class="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-            <a href="{{ route('tenant.dashboard') }}" class="truncate text-lg font-extrabold tracking-tight text-violet-800">{{ $tenant?->name }}</a>
+            <a href="{{ route('tenant.dashboard') }}" class="truncate text-lg font-extrabold tracking-tight text-brand-800">{{ $tenant?->name }}</a>
             <button class="btn-ghost btn-sm lg:hidden" @click="open=false" aria-label="Menüyü kapat">✕</button>
         </div>
         <nav class="space-y-1 p-3">
@@ -49,7 +49,7 @@
         </div>
     </aside>
     <div class="flex min-w-0 flex-1 flex-col">
-        <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 shadow-sm shadow-violet-100/40 backdrop-blur">
+        <header class="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 shadow-sm shadow-brand-100/40 backdrop-blur">
             <button class="btn-ghost btn-sm lg:hidden" @click="open=true" aria-label="Menüyü aç">☰</button>
             <h1 class="truncate text-lg font-bold text-slate-900">@yield('title', 'Panel')</h1>
             <div class="flex items-center gap-2">

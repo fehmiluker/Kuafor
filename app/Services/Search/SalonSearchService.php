@@ -58,7 +58,15 @@ final class SalonSearchService
                 });
             }
             if (! empty($f['q'])) {
-                $q->where('tenants.name', 'like', '%'.str_replace(['%', '_'], ['\%', '\_'], (string) $f['q']).'%');
+                // Free text: salon name, an active service name, or the branch's district/city name.
+                $like = '%'.str_replace(['%', '_'], ['\%', '\_'], (string) $f['q']).'%';
+                $q->where(fn ($w) => $w->where('tenants.name', 'like', $like)
+                    ->orWhereExists(fn ($s) => $s->from('services')->whereColumn('services.tenant_id', 'tenants.id')
+                        ->where('services.active', true)->whereNull('services.deleted_at')->where('services.name', 'like', $like))
+                    ->orWhereExists(fn ($b) => $b->from('branches')->whereColumn('branches.tenant_id', 'tenants.id')
+                        ->where('branches.status', RecordStatus::Active->value)->whereNull('branches.deleted_at')
+                        ->where(fn ($p) => $p->whereIn('branches.district_id', DB::table('districts')->where('name', 'like', $like)->select('id'))
+                            ->orWhereIn('branches.city_id', DB::table('cities')->where('name', 'like', $like)->select('id')))));
             }
 
             match ($f['sort'] ?? 'rating') {

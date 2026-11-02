@@ -6,7 +6,7 @@
 @endphp
 @if($ad)
     <aside {{ $attributes->merge(['class' => 'relative']) }} aria-label="Reklam">
-        <a href="{{ route('ads.click', $ad) }}" target="_blank" rel="sponsored noopener" class="block overflow-hidden rounded-2xl ring-1 ring-slate-200 transition hover:ring-violet-300">
+        <a href="{{ route('ads.click', $ad) }}" target="_blank" rel="sponsored noopener" class="block overflow-hidden rounded-2xl ring-1 ring-slate-200 transition hover:ring-brand-300">
             <picture>
                 @if($ad->mobileImageUrl())<source media="(max-width: 640px)" srcset="{{ $ad->mobileImageUrl() }}">@endif
                 <img src="{{ $ad->imageUrl() }}" alt="{{ $ad->title }}" class="block h-auto w-full" loading="lazy" decoding="async">
