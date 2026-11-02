@@ -42,6 +42,11 @@ php artisan kuafor:ornek-isletmeler           # ekle (tekrar çalıştırmak gü
 php artisan kuafor:ornek-isletmeler --kaldir  # gerçek salonlar katılınca kaldır
 ```
 
+**Salon ekleme (süper admin):**
+- *Salon aktarma* (`/admin/salon-aktarma`): platforma katılmayı kabul eden salonları CSV ile toplu ekleyin (şablon sayfada). Önce önizleme, sonra aktarma; her sahibe 7 gün geçerli şifre belirleme daveti gider. SSH ile: `php artisan kuafor:salon-aktar dosya.csv [--davet] [--onizle]`. İzinsiz toplanmış işletme verisi yüklemeyin.
+- *Başvurular* (`/admin/basvurular`): salon sahipleri `/salonunu-ekle` formundan başvurur (alt bilgideki "İşletmeniz mi var?"); onaylayınca salon kurulur ve davet gider, reddedilirse gerekçe e-postalanır. Form aynı sayfadan açılıp kapatılır.
+- Davet ve ret e-postaları kuyruktan gider: `queue:work` (veya cron'daki `queue:work --stop-when-empty`) çalışmalı.
+
 Süper admin demo'da yoktur. Güvenli yoldan oluşturun (rastgele parola bir kez gösterilir, ilk girişte TOTP zorunlu):
 ```bash
 php artisan platform:create-admin admin@example.com

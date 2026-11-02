@@ -90,11 +90,23 @@ class AuthController extends Controller
         return view('auth.reset', ['token' => $token, 'email' => $request->query('email')]);
     }
 
-    public function reset(Request $request): RedirectResponse
+    /** Salon owner invitation link (7-day "invites" broker): same form as a password reset. */
+    public function showInvite(Request $request, string $token): View
+    {
+        return view('auth.reset', ['token' => $token, 'email' => $request->query('email'), 'invite' => true]);
+    }
+
+    public function acceptInvite(Request $request): RedirectResponse
+    {
+        return $this->reset($request, 'invites');
+    }
+
+    public function reset(Request $request, ?string $broker = null): RedirectResponse
     {
         $data = $request->validate(['token' => ['required'], 'email' => ['required', 'email'], 'password' => ['required', 'confirmed', PasswordRule::min(10)->letters()->numbers()]]);
-        $status = Password::reset($data, function (User $user, string $password) {
-            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
+        $data['email'] = strtolower($data['email']);
+        $status = Password::broker($broker)->reset($data, function (User $user, string $password) {
+            $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60), 'email_verified_at' => $user->email_verified_at ?? now()])->save(); // the e-mailed link proves the address
             $user->tokens()->delete(); // revoke API sessions after a reset
             event(new PasswordReset($user));
         });

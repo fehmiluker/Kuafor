@@ -54,7 +54,7 @@
     <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:justify-between">
         <p>© {{ date('Y') }} {{ config('app.name') }} · Ödemeler salonda yapılır; platform üzerinden ödeme alınmaz.</p>
         <p class="flex flex-wrap gap-4">
-            @guest<a href="{{ route('register', ['isletme' => 1]) }}" class="font-semibold text-brand-700 hover:underline">İşletmeniz mi var?</a>@endguest
+            @guest<a href="{{ route('salon-application.create') }}" class="font-semibold text-brand-700 hover:underline">İşletmeniz mi var?</a>@endguest
             <a href="{{ route('kvkk') }}" class="hover:underline">KVKK Aydınlatma</a><a href="{{ route('terms') }}" class="hover:underline">Kullanım Koşulları</a>
         </p>
     </div>

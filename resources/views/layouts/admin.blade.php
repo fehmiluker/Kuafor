@@ -9,7 +9,7 @@
     <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
         <a href="{{ route('admin.dashboard') }}" class="font-bold">Platform Yönetimi</a>
         <nav aria-label="Yönetim menüsü" class="flex flex-wrap gap-1 text-sm">
-            @foreach([['admin.dashboard','Özet'],['admin.tenants','İşletmeler'],['admin.plans','Paketler'],['admin.moderation','Moderasyon'],['admin.ads.index','Reklamlar'],['admin.audit','Denetim'],['admin.system','Sistem']] as [$r,$l])
+            @foreach([['admin.dashboard','Özet'],['admin.tenants','İşletmeler'],['admin.onboarding.applications','Başvurular'],['admin.onboarding.import','Salon aktarma'],['admin.plans','Paketler'],['admin.moderation','Moderasyon'],['admin.ads.index','Reklamlar'],['admin.audit','Denetim'],['admin.system','Sistem']] as [$r,$l])
                 <a href="{{ route($r) }}" class="rounded px-3 py-2 hover:bg-slate-700 {{ request()->routeIs(\Illuminate\Support\Str::beforeLast($r, '.index').'*') ? 'bg-slate-700' : '' }}" @if(request()->routeIs(\Illuminate\Support\Str::beforeLast($r, '.index').'*')) aria-current="page" @endif>{{ $l }}</a>
             @endforeach
         </nav>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\Admin\AdminAdController;
+use App\Http\Controllers\Web\Admin\AdminOnboardingController;
 use App\Http\Controllers\Web\Admin\AdminPanelController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Customer\AccountController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Web\Public\AdClickController;
 use App\Http\Controllers\Web\Public\GuestAppointmentController;
 use App\Http\Controllers\Web\Public\LocationController;
 use App\Http\Controllers\Web\Public\PublicController;
+use App\Http\Controllers\Web\Public\SalonApplicationController;
 use App\Http\Controllers\Web\Tenant\PanelAppointmentController;
 use App\Http\Controllers\Web\Tenant\PanelCatalogController;
 use App\Http\Controllers\Web\Tenant\PanelController;
@@ -28,6 +30,8 @@ Route::get('sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap')
 Route::get('robots.txt', [PublicController::class, 'robots'])->name('robots');
 Route::view('kvkk-aydinlatma', 'public.kvkk')->name('kvkk');
 Route::view('kullanim-kosullari', 'public.terms')->name('terms');
+Route::get('salonunu-ekle', [SalonApplicationController::class, 'create'])->name('salon-application.create');
+Route::post('salonunu-ekle', [SalonApplicationController::class, 'store'])->middleware('throttle:5,60')->name('salon-application.store');
 
 Route::middleware(['noindex', 'throttle:guest'])->group(function () {
     Route::get('randevu/{reference}', [GuestAppointmentController::class, 'show'])->name('guest.appointment');
@@ -48,6 +52,8 @@ Route::middleware('guest')->group(function () {
     Route::post('sifremi-unuttum', [AuthController::class, 'forgot'])->middleware('throttle:auth')->name('password.email');
     Route::get('sifre-sifirla/{token}', [AuthController::class, 'showReset'])->name('password.reset');
     Route::post('sifre-sifirla', [AuthController::class, 'reset'])->middleware('throttle:auth')->name('password.update');
+    Route::get('davet/{token}', [AuthController::class, 'showInvite'])->middleware('noindex')->name('invite.show');
+    Route::post('davet', [AuthController::class, 'acceptInvite'])->middleware('throttle:auth')->name('invite.accept');
 });
 
 Route::middleware(['auth', 'noindex'])->group(function () {
@@ -157,6 +163,15 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::get('reklamlar/{ad}', [AdminAdController::class, 'edit'])->whereNumber('ad')->name('ads.edit');
         Route::put('reklamlar/{ad}', [AdminAdController::class, 'update'])->whereNumber('ad')->name('ads.update');
         Route::delete('reklamlar/{ad}', [AdminAdController::class, 'destroy'])->whereNumber('ad')->name('ads.destroy');
+        Route::get('salon-aktarma', [AdminOnboardingController::class, 'importForm'])->name('onboarding.import');
+        Route::get('salon-aktarma/sablon', [AdminOnboardingController::class, 'template'])->name('onboarding.template');
+        Route::post('salon-aktarma/onizle', [AdminOnboardingController::class, 'preview'])->name('onboarding.preview');
+        Route::post('salon-aktarma', [AdminOnboardingController::class, 'import'])->name('onboarding.run');
+        Route::get('basvurular', [AdminOnboardingController::class, 'applications'])->name('onboarding.applications');
+        Route::post('basvurular/ayar', [AdminOnboardingController::class, 'toggleApplications'])->name('onboarding.toggle');
+        Route::get('basvurular/{application}', [AdminOnboardingController::class, 'application'])->whereNumber('application')->name('onboarding.application');
+        Route::post('basvurular/{application}/onayla', [AdminOnboardingController::class, 'approve'])->whereNumber('application')->name('onboarding.approve');
+        Route::post('basvurular/{application}/reddet', [AdminOnboardingController::class, 'reject'])->whereNumber('application')->name('onboarding.reject');
         Route::post('sistem/whatsapp', [AdminPanelController::class, 'connectPlatformWhatsApp'])->name('whatsapp.platform');
         Route::delete('sistem/whatsapp', [AdminPanelController::class, 'disconnectPlatformWhatsApp'])->name('whatsapp.platform.disconnect');
         Route::post('isletmeler/{tenant:id}/subeler/{branch}/whatsapp', [AdminPanelController::class, 'connectBranchWhatsApp'])->whereNumber('branch')->name('tenants.whatsapp');
