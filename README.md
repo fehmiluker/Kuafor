@@ -36,6 +36,11 @@ Kuyruk (`queue:work`) ve zamanlayıcı (`schedule:work`) için [docs/deployment.
 | İşletme sahibi (Standart, listelemeye kapalı) | `sahip@denizguzellik.test` |
 | Müşteri | `musteri@example.test` |
 
+**Bursa demo salonları** (kurgusal; Nilüfer, Osmangazi, Yıldırım, Mudanya, İnegöl, Gemlik — puanlı yorumlar ve kapak görselleriyle). Sahip hesapları: `sahip@lavantakuafor.test`, `sahip@tophaneberber.test`, `sahip@setbasiguzellik.test`, `sahip@mavikiyinail.test`, `sahip@goruklekirpik.test`, `sahip@ustamakas.test`, `sahip@zeytindali.test`, `sahip@cekirgegelin.test`. Mevcut bir demoya sonradan eklemek için (aynı salon varsa atlanır):
+```bash
+php artisan db:seed --class=BursaDemoSeeder --force
+```
+
 Süper admin demo'da yoktur. Güvenli yoldan oluşturun (rastgele parola bir kez gösterilir, ilk girişte TOTP zorunlu):
 ```bash
 php artisan platform:create-admin admin@example.com

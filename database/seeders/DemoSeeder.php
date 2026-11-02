@@ -18,7 +18,6 @@ use App\Models\City;
 use App\Models\District;
 use App\Models\Plan;
 use App\Models\TenantCustomer;
-use App\Models\User;
 use App\Models\WhatsAppConnection;
 use App\Services\Booking\AppointmentService;
 use App\Services\Notifications\ConsentService;
@@ -26,20 +25,20 @@ use App\Services\Reviews\ReviewService;
 use App\Services\Settings\SettingsRepository;
 use Carbon\CarbonImmutable;
 use Database\Seeders\Support\SalonBuilder;
+use Database\Seeders\Support\SeedsDemoData;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Demo data: 3 tenants on 3 plans, a multi-branch salon, employees, services,
+ * Demo data: 3 tenants on 3 plans (+ Bursa salons, BursaDemoSeeder), a multi-branch salon, employees, services,
  * appointments in every state and verified reviews. NEVER run in production —
  * demo users share the password "Demo12345!" and are listed in README.md.
  */
 class DemoSeeder extends Seeder
 {
-    public const PASSWORD = 'Demo12345!';
+    use SeedsDemoData;
 
     public function run(): void
     {
@@ -148,33 +147,11 @@ class DemoSeeder extends Seeder
             $tenant->forceFill(['cover_path' => $path])->save();
         }
 
-        $this->call(AdDemoSeeder::class);
+        $this->call([BursaDemoSeeder::class, AdDemoSeeder::class]);
 
         $this->command?->info('Demo verisi oluşturuldu. Kullanıcılar ve şifre için README.md\'ye bakın.');
         unset($pending, $t3, $burak);
     }
 
     private array $pending = [];
-
-    private function user(string $name, string $email, string $phone): User
-    {
-        $u = User::where('email', $email)->first() ?? new User;
-        $u->forceFill(['name' => $name, 'email' => $email, 'phone_e164' => $phone, 'password' => self::PASSWORD,
-            'email_verified_at' => now(), 'phone_verified_at' => now(), 'locale' => 'tr', 'status' => 'active'])->save();
-        $u->inTeam((int) config('tenancy.platform_team_id'), fn (User $x) => $x->syncRoles(['customer']));
-
-        return $u;
-    }
-
-    private function travel(CarbonImmutable $to, \Closure $fn): void
-    {
-        CarbonImmutable::setTestNow($to);
-        Carbon::setTestNow($to);
-        try {
-            $fn();
-        } finally {
-            CarbonImmutable::setTestNow();
-            Carbon::setTestNow();
-        }
-    }
 }

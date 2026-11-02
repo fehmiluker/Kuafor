@@ -231,7 +231,7 @@ cPanel'de bildirim kuyruğu cron ile dakikada bir çalıştığı için bildirim
 
 ## 11. Demo verisi ve hesaplar
 
-`migrate --seed` komutu (APP_ENV production **değilse**) şunları oluşturur: 81 il ve büyük şehirlerin ilçeleri, hizmet kategorileri, 3 paket (Standart/Profesyonel/Premium), WhatsApp şablonları (sandbox), **3 demo salon**, personel, hizmetler, her durumda randevular ve doğrulanmış yorumlar, sandbox platform WhatsApp numarası.
+`migrate --seed` komutu (APP_ENV production **değilse**) şunları oluşturur: 81 il ve büyük şehirlerin ilçeleri, hizmet kategorileri, 3 paket (Standart/Profesyonel/Premium), WhatsApp şablonları (sandbox), **3 demo salon + 8 Bursa demo salonu**, personel, hizmetler, her durumda randevular ve doğrulanmış yorumlar, sandbox platform WhatsApp numarası.
 
 Demo hesapları (şifre hepsi için **`Demo12345!`**):
 
@@ -244,6 +244,9 @@ Demo hesapları (şifre hepsi için **`Demo12345!`**):
 | Berber (Profesyonel, otomatik onay) | `sahip@modaberber.test` | Otomatik onaylı salon |
 | Güzellik salonu (Standart, listelemeye kapalı) | `sahip@denizguzellik.test` | WhatsApp'sız paket |
 | Müşteri | `musteri@example.test` | Randevularım, favoriler, yorumlar |
+| Bursa salonları (8 salon, kurgusal) | `sahip@lavantakuafor.test`, `sahip@tophaneberber.test`, `sahip@setbasiguzellik.test`, `sahip@mavikiyinail.test`, `sahip@goruklekirpik.test`, `sahip@ustamakas.test`, `sahip@zeytindali.test`, `sahip@cekirgegelin.test` | Konum "Bursa" seçilince "Size yakın salonlar" |
+
+Demo daha önce kurulduysa Bursa salonlarını sonradan eklemek için: `php84 artisan db:seed --class=BursaDemoSeeder --force` (aynı salon tekrar oluşturulmaz).
 
 **Faydalı komutlar:**
 
