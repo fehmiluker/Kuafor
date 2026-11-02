@@ -6,6 +6,7 @@ use App\Enums\AppointmentSource;
 use App\Exceptions\BookingConflictException;
 use App\Exceptions\DomainRuleException;
 use App\Models\Branch;
+use App\Models\CustomerFavorite;
 use App\Models\Employee;
 use App\Models\Tenant;
 use App\Rules\Phone;
@@ -13,10 +14,13 @@ use App\Services\Auth\PhoneVerificationService;
 use App\Services\Booking\AvailabilityService;
 use App\Services\Booking\BookingSettings;
 use App\Services\Booking\PublicBookingService;
+use App\Services\Catalog\BookingLinkService;
 use App\Services\Catalog\PublicCatalog;
+use App\Services\Catalog\RebookService;
 use App\Support\Money;
 use App\Support\PhoneNumber;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
@@ -90,15 +94,49 @@ class BookingWizard extends Component
             $this->branchId = $branches->count() === 1 ? $branches->first()->id : $requested;
             $this->step = 2;
         }
-        if ($service = (int) request()->query('hizmet')) {
-            $this->serviceIds = [$service];
-        }
+        $this->prefill($catalog, (string) request()->query('hizmet', ''), (int) request()->query('personel'));
         $this->date = CarbonImmutable::now($branches->first()->timezone)->toDateString();
         if ($user = auth()->user()) {
             $this->fullName = $user->name;
             $this->phone = (string) $user->phone_e164;
             $this->email = (string) $user->email;
         }
+    }
+
+    /**
+     * "Tekrar randevu al" links pre-select services (?hizmet=1,2) and an employee (?personel=3).
+     * Only choices still offered by this branch are kept; the booking itself is re-validated anyway.
+     */
+    private function prefill(PublicCatalog $catalog, string $services, int $employeeId): void
+    {
+        $requested = array_values(array_unique(array_filter(array_map('intval', explode(',', $services)))));
+        if ($requested === []) {
+            return;
+        }
+        if (! $this->branchId) {
+            $this->serviceIds = array_slice($requested, 0, 1);
+
+            return;
+        }
+        $branch = $this->branch();
+        $offered = $catalog->services($branch)->pluck('id')->all();
+        $this->serviceIds = array_slice(array_values(array_intersect($requested, $offered)), 0, (int) config('booking.max_services_per_appointment'));
+        if ($this->serviceIds === []) {
+            return;
+        }
+        $this->step = 3;
+        if ($employeeId && $catalog->employees($branch, $this->serviceIds)->contains('id', $employeeId)) {
+            $this->employeeId = $employeeId;
+            $this->step = 4;
+        }
+    }
+
+    public function addFavorite(): void
+    {
+        $user = auth()->user();
+        abort_unless($user && $this->result, 403);
+        CustomerFavorite::firstOrCreate(['user_id' => $user->id, 'tenant_id' => $this->tenantId]);
+        $this->result['favorite'] = true;
     }
 
     private function tenant(): Tenant
@@ -203,7 +241,7 @@ class BookingWizard extends Component
         $this->step = max($min, $this->step - 1);
     }
 
-    public function confirm(PublicBookingService $booking): void
+    public function confirm(PublicBookingService $booking, BookingLinkService $links, RebookService $rebook): void
     {
         if ($this->website !== '') {
             abort(422);
@@ -235,11 +273,16 @@ class BookingWizard extends Component
             return;
         }
         $a = $r['appointment'];
+        $links->booked($this->tenantId);
+        // "Son gittiğim salon": remembered on this device even without an account.
+        Cookie::queue($rebook->rememberCookie($this->tenantId, $branch->id, $this->serviceIds, $this->employeeId ?? $a->employee_id));
+        $user = auth()->user();
         $this->result = [
             'reference' => $a->public_reference,
             'status' => $a->status->value,
             'status_label' => $a->status->label(),
             'manage_url' => $r['guest_token'] ? route('guest.appointment', ['reference' => $a->public_reference, 'token' => $r['guest_token']]) : null,
+            'favorite' => $user ? CustomerFavorite::where('user_id', $user->id)->where('tenant_id', $this->tenantId)->exists() : false,
         ];
         $this->step = 7;
     }

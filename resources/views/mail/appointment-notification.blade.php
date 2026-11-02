@@ -4,6 +4,7 @@
     <h1 style="font-size:18px;margin:0 0 12px">{{ $subjectLine }}</h1>
     <p style="line-height:1.6">{{ $body }}</p>
     @if($actionUrl)<p><a href="{{ $actionUrl }}" style="display:inline-block;background:#2f55c7;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">{{ $actionLabel }}</a></p>@endif
+    @if($rebookUrl)<p style="font-size:14px">Bir sonraki randevunuz için: <a href="{{ $rebookUrl }}" style="color:#2f55c7">Yeni randevu al</a></p>@endif
     <p style="font-size:12px;color:#64748b">Bu bağlantı size özeldir, lütfen paylaşmayın. Ödemeler salonda yapılır.</p>
 </div>
 </body></html>

@@ -12,6 +12,7 @@
         ['tenant.services.index', 'Hizmetler', $p('appointments.view')],
         ['tenant.employees.index', 'Personel', $p('appointments.view')],
         ['tenant.branches.index', 'Şubeler', $p('appointments.view')],
+        ['tenant.share', 'Müşteri bağlantım', $p('appointments.view')],
         ['tenant.reviews', 'Değerlendirmeler', $p('reviews.reply')],
         ['tenant.reports', 'Raporlar', $p('reports.view') && ($features['reports'] ?? false)],
         ['tenant.settings', 'Ayarlar', $p('settings.manage')],

@@ -13,6 +13,7 @@ use App\Models\ServiceCategory;
 use App\Models\Tenant;
 use App\Models\TenantMedia;
 use App\Services\Catalog\PublicCatalog;
+use App\Services\Catalog\RebookService;
 use App\Services\Catalog\SalonCards;
 use App\Services\Search\SalonSearchService;
 use App\Support\Money;
@@ -39,7 +40,7 @@ class PublicController extends Controller
         'sakal' => ['Erkek Bakımı', 'images/home/sakal.jpg'],
     ];
 
-    public function home(Request $request, SalonSearchService $search, SalonCards $cards): View
+    public function home(Request $request, SalonSearchService $search, SalonCards $cards, RebookService $rebook): View
     {
         $withBranches = ['branches' => fn ($q) => $q->where('status', 'active')->with(['city', 'district'])];
         $featured = Tenant::query()->publiclyListed()->whereNotNull('rating_avg')->with($withBranches)
@@ -58,6 +59,8 @@ class PublicController extends Controller
         $prices = $cards->minPrices(array_keys(self::POPULAR_SERVICES));
 
         return view('public.home', [
+            // Favourites + last visited salons ("son gittiğim salon" works for guests via cookie).
+            'rebook' => $rebook->items($request->user(), $request, limit: 8),
             'featured' => $featured,
             'nearby' => $nearby,
             'location' => $location,

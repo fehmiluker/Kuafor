@@ -42,6 +42,10 @@ php artisan kuafor:ornek-isletmeler           # ekle (tekrar çalıştırmak gü
 php artisan kuafor:ornek-isletmeler --kaldir  # gerçek salonlar katılınca kaldır
 ```
 
+**Müşteri bağlantısı ve favoriler:**
+- Her salonun kalıcı randevu bağlantısı `/r/{salon}` doğrudan randevu ekranını açar. Panel > *Müşteri bağlantım*: kopyala, WhatsApp'ta paylaş, QR kod (PNG/SVG indir, yazdırılabilir masa kartı), şube bağlantıları ve son 30 gün ziyaret/randevu sayıları (bağlantı, QR, WhatsApp, e-posta).
+- Müşteri tarafı: randevu sonrası "Favorilere ekle"; ana sayfada "Favori ve son salonlarınız" (üye olmayan için bu cihazda son gidilen salon, `son_salon` çerezi); Favoriler sayfasında "Tekrar randevu al" (son hizmet ve personel seçili gelir), ara ve yol tarifi. Müşteri e-postalarında "Yeni randevu al" bağlantısı.
+
 **Salon ekleme (süper admin):**
 - *Salon aktarma* (`/admin/salon-aktarma`): platforma katılmayı kabul eden salonları CSV ile toplu ekleyin (şablon sayfada). Önce önizleme, sonra aktarma; her sahibe 7 gün geçerli şifre belirleme daveti gider. SSH ile: `php artisan kuafor:salon-aktar dosya.csv [--davet] [--onizle]`. İzinsiz toplanmış işletme verisi yüklemeyin.
 - *Başvurular* (`/admin/basvurular`): salon sahipleri `/salonunu-ekle` formundan başvurur (alt bilgideki "İşletmeniz mi var?"); onaylayınca salon kurulur ve davet gider, reddedilirse gerekçe e-postalanır. Form aynı sayfadan açılıp kapatılır.

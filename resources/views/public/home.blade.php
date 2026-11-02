@@ -23,6 +23,17 @@
     <a href="{{ route('search') }}" class="shrink-0 text-slate-900 hover:text-brand-700" aria-label="Gelişmiş filtreler"><x-icon name="sliders" class="h-5 w-5" /></a>
 </form>
 
+{{-- Favourites + last visited salons --}}
+@if($rebook->isNotEmpty())
+<section class="mt-4 sm:mt-8" aria-labelledby="rebook-h">
+    <div class="mb-2.5 flex items-center justify-between"><h2 id="rebook-h" class="text-lg font-extrabold tracking-tight sm:text-xl">{{ auth()->check() ? 'Favori ve son salonlarınız' : 'Son gittiğiniz salon' }}</h2>
+        @auth<a href="{{ route('account.favorites') }}" class="text-[13px] font-semibold text-brand-600 hover:underline sm:text-sm">Tümünü Gör ›</a>@endauth</div>
+    <div class="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+        @foreach($rebook as $item)<div class="w-[78%] shrink-0 snap-start sm:w-auto">@include('customer._rebook-card', ['item' => $item])</div>@endforeach
+    </div>
+</section>
+@endif
+
 {{-- Category tiles --}}
 <nav aria-label="Kategoriler" class="mx-auto mt-3 grid max-w-xl grid-cols-5 gap-2 sm:mt-6 sm:gap-3.5">
     @foreach($tiles as $t)

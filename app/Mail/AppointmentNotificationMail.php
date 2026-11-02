@@ -12,7 +12,8 @@ class AppointmentNotificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public readonly string $subjectLine, public readonly string $body, public readonly ?string $actionUrl = null, public readonly ?string $actionLabel = null)
+    /** $rebookUrl: the salon's public booking link ("Yeni randevu al"), customer e-mails only. */
+    public function __construct(public readonly string $subjectLine, public readonly string $body, public readonly ?string $actionUrl = null, public readonly ?string $actionLabel = null, public readonly ?string $rebookUrl = null)
     {
         $this->afterCommit();
     }

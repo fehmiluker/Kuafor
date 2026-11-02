@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\Admin\AdminPanelController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Customer\AccountController;
 use App\Http\Controllers\Web\Public\AdClickController;
+use App\Http\Controllers\Web\Public\BookingLinkController;
 use App\Http\Controllers\Web\Public\GuestAppointmentController;
 use App\Http\Controllers\Web\Public\LocationController;
 use App\Http\Controllers\Web\Public\PublicController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Web\Public\SalonApplicationController;
 use App\Http\Controllers\Web\Tenant\PanelAppointmentController;
 use App\Http\Controllers\Web\Tenant\PanelCatalogController;
 use App\Http\Controllers\Web\Tenant\PanelController;
+use App\Http\Controllers\Web\Tenant\PanelShareController;
 use App\Http\Controllers\Web\Tenant\SubscriptionPaymentController;
 use App\Http\Controllers\Web\TwoFactorController;
 use App\Livewire\Public\BookingWizard;
@@ -23,6 +25,7 @@ Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('salonlar/{city?}/{district?}', [PublicController::class, 'search'])->name('search');
 Route::get('salon/{slug}', [PublicController::class, 'salon'])->name('salon.show');
 Route::get('salon/{slug}/randevu', BookingWizard::class)->name('salon.book');
+Route::get('r/{slug}', BookingLinkController::class)->middleware(['throttle:60,1', 'noindex'])->name('booking-link');
 Route::get('konum', [LocationController::class, 'edit'])->middleware('noindex')->name('location.edit');
 Route::post('konum', [LocationController::class, 'update'])->middleware('throttle:30,1')->name('location.update');
 Route::get('reklam/{ad}', AdClickController::class)->whereNumber('ad')->middleware(['throttle:60,1', 'noindex'])->name('ads.click');
@@ -128,6 +131,10 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::get('musteriler', [PanelCatalogController::class, 'customers'])->name('customers.index');
         Route::get('musteriler/{customer}', [PanelCatalogController::class, 'customer'])->name('customers.show');
         Route::put('musteriler/{customer}', [PanelCatalogController::class, 'updateCustomer'])->name('customers.update');
+
+        Route::get('baglanti', [PanelShareController::class, 'show'])->name('share');
+        Route::get('baglanti/qr', [PanelShareController::class, 'qr'])->name('share.qr');
+        Route::get('baglanti/yazdir', [PanelShareController::class, 'print'])->name('share.print');
 
         Route::get('degerlendirmeler', [PanelController::class, 'reviews'])->name('reviews');
         Route::post('degerlendirmeler/{review}/yanit', [PanelController::class, 'replyReview'])->name('reviews.reply');

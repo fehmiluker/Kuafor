@@ -14,6 +14,7 @@ use App\Models\Tenant;
 use App\Services\Auth\CustomerLinker;
 use App\Services\Auth\PhoneVerificationService;
 use App\Services\Booking\AppointmentService;
+use App\Services\Catalog\RebookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,12 +49,14 @@ class AccountController extends Controller
         return back()->with('status', 'Randevunuz iptal edildi.');
     }
 
-    public function favorites(Request $request): View
+    public function favorites(Request $request, RebookService $rebook): View
     {
-        $tenants = Tenant::whereIn('id', CustomerFavorite::where('user_id', $request->user()->id)->pluck('tenant_id'))
-            ->with(['branches' => fn ($q) => $q->where('status', 'active')->with('city', 'district')])->get();
+        $items = $rebook->items($request->user(), $request);
 
-        return view('customer.favorites', compact('tenants'));
+        return view('customer.favorites', [
+            'favorites' => $items->where('favorite', true)->values(),
+            'visited' => $items->where('favorite', false)->values(),
+        ]);
     }
 
     public function toggleFavorite(Request $request, string $slug): RedirectResponse

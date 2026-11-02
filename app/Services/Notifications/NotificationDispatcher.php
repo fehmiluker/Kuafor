@@ -198,7 +198,8 @@ final class NotificationDispatcher
             }
         }
         if ($customer->email && $this->consents->preferenceAllows($customer, $category, NotificationChannel::Email)) {
-            $this->deliverEmail($a, $customer->email, $subject, TemplateCatalog::render($templateKey, $params), $link ?? $this->manageUrl($a), $templateKey, $dedupe ? 'mail:'.$dedupe : null, $linkLabel);
+            $this->deliverEmail($a, $customer->email, $subject, TemplateCatalog::render($templateKey, $params), $link ?? $this->manageUrl($a), $templateKey, $dedupe ? 'mail:'.$dedupe : null, $linkLabel,
+                rebookUrl: route('booking-link', ['slug' => $ctx['tenant']->slug, 'k' => 'eposta']));
         }
 
         return false;
@@ -257,12 +258,12 @@ final class NotificationDispatcher
         }
     }
 
-    private function deliverEmail(Appointment $a, string $email, string $subject, string $body, ?string $url, string $event, ?string $dedupe = null, ?string $label = null): void
+    private function deliverEmail(Appointment $a, string $email, string $subject, string $body, ?string $url, string $event, ?string $dedupe = null, ?string $label = null, ?string $rebookUrl = null): void
     {
         if ($dedupe && ! $this->claimDelivery($a, NotificationChannel::Email, $email, $event, $dedupe)) {
             return;
         }
-        Mail::to($email)->queue(new AppointmentNotificationMail($subject, $body, $url, $label ?? 'Randevuyu görüntüle'));
+        Mail::to($email)->queue(new AppointmentNotificationMail($subject, $body, $url, $label ?? 'Randevuyu görüntüle', $rebookUrl));
         if (! $dedupe) {
             $this->recordDelivery($a, NotificationChannel::Email, $email, $event, 'queued');
         }
@@ -355,9 +356,10 @@ final class NotificationDispatcher
         return route('guest.appointment', ['reference' => $a->public_reference, 'token' => $guestToken]);
     }
 
+    /** Rejected / cancelled / expired: straight back to booking at the same salon. */
     private function salonUrl(Appointment $a): string
     {
-        return route('salon.show', ['slug' => $this->tenantOf($a)->slug]);
+        return route('booking-link', ['slug' => $this->tenantOf($a)->slug]);
     }
 
     /** Signed, expiring deep link into the panel (login + permission still required). */

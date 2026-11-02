@@ -121,7 +121,17 @@
                 <p class="mt-4 text-sm">Randevunuzu görüntülemek veya iptal etmek için bu bağlantıyı saklayın:</p>
                 <a href="{{ $result['manage_url'] }}" class="btn-secondary mt-2 break-all">Randevumu yönet</a>
             @endif
-            @guest<p class="mt-4 text-xs text-slate-500">Hesap açarak tüm randevularınızı tek yerden yönetebilirsiniz. <a href="{{ route('register') }}" class="text-brand-700 underline">Üye ol</a></p>@endguest
+            @auth
+                @if($result['favorite'] ?? false)
+                    <p class="mt-4 text-sm text-emerald-700">♥ {{ $tenant->name }} favorilerinizde; bir dahaki sefere "Favoriler"den tek dokunuşla randevu alabilirsiniz.</p>
+                @else
+                    <div class="mt-4 rounded-xl bg-brand-50 p-4 text-sm">
+                        <p>Bir dahaki sefere daha hızlı randevu almak için <strong>{{ $tenant->name }}</strong> salonunu favorilerinize ekleyin.</p>
+                        <button type="button" wire:click="addFavorite" class="btn-primary btn-sm mt-2">♡ Favorilere ekle</button>
+                    </div>
+                @endif
+            @endauth
+            @guest<p class="mt-4 text-xs text-slate-500">Bu salon bu cihazda hatırlanır; ana sayfadan tekrar randevu alabilirsiniz. Hesap açarak tüm randevularınızı ve favori salonlarınızı tek yerden yönetebilirsiniz. <a href="{{ route('register') }}" class="text-brand-700 underline">Üye ol</a></p>@endguest
         </div>
     @endif
 </div>
