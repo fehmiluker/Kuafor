@@ -30,7 +30,7 @@ class PublicController extends Controller
         ['label' => 'Berber', 'slug' => 'sakal', 'icon' => 'razor', 'tone' => 'k2'],
         ['label' => 'Güzellik', 'slug' => 'cilt-bakimi', 'icon' => 'face', 'tone' => 'k3'],
         ['label' => 'Tırnak', 'slug' => 'manikur-pedikur', 'icon' => 'polish', 'tone' => 'k4'],
-        ['label' => 'Makyaj', 'slug' => 'makyaj', 'icon' => 'brush', 'tone' => 'k5'],
+        ['label' => 'Masaj', 'slug' => 'masaj', 'icon' => 'lotus', 'tone' => 'k5'],
     ];
 
     /** "Popüler hizmetler" cards: platform category slug => [title, image]. */

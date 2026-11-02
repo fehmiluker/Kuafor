@@ -73,4 +73,25 @@ class ShowcaseSalonsTest extends TestCase
         $this->assertSoftDeleted($old);
         $this->assertNotSoftDeleted($real);
     }
+
+    public function test_masaj_tile_and_category_and_existing_salons_get_new_services(): void
+    {
+        $this->assertTrue(DB::table('service_categories')->whereNull('tenant_id')->where('slug', 'masaj')->exists());
+        $this->get('/')->assertOk()->assertSee('Masaj')->assertSee('kategori=masaj', false)->assertDontSee('kategori=makyaj', false);
+
+        $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
+        $this->get(route('search', ['city' => 'bursa', 'kategori' => 'masaj']))->assertOk()->assertSee('4 salon bulundu');
+
+        // A salon created before "Masaj" was in the list gets the service on the next run (with its staff).
+        $salon = Tenant::where('slug', 'ipek-yolu-guzellik-merkezi-bursa')->firstOrFail();
+        DB::table('employee_services')->whereIn('service_id', DB::table('services')->where('tenant_id', $salon->id)->where('name', 'Aromaterapi Masajı')->pluck('id'))->delete();
+        DB::table('branch_services')->whereIn('service_id', DB::table('services')->where('tenant_id', $salon->id)->where('name', 'Aromaterapi Masajı')->pluck('id'))->delete();
+        DB::table('services')->where('tenant_id', $salon->id)->where('name', 'Aromaterapi Masajı')->delete();
+
+        $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
+        $id = DB::table('services')->where('tenant_id', $salon->id)->where('name', 'Aromaterapi Masajı')->value('id');
+        $this->assertNotNull($id);
+        $this->assertSame(3, DB::table('employee_services')->where('service_id', $id)->count());
+        $this->assertSame(1, DB::table('services')->where('tenant_id', $salon->id)->where('name', 'Aromaterapi Masajı')->count());
+    }
 }

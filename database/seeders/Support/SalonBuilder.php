@@ -39,6 +39,14 @@ final class SalonBuilder
         return $this;
     }
 
+    /** Continue building on an existing tenant (e.g. add services to an earlier showcase salon). */
+    public function forTenant(Tenant $tenant): self
+    {
+        $this->tenant = $tenant;
+
+        return $this;
+    }
+
     public function get(): Tenant
     {
         return $this->tenant->refresh();

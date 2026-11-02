@@ -18,7 +18,7 @@ final class SalonCards
     /** Short tag per platform category slug (cards have room for ~3 short tags). */
     private const SHORT = [
         'sac-kesim' => 'Kuaför', 'sac-boya' => 'Boya', 'fon-sekillendirme' => 'Fön', 'sakal' => 'Berber',
-        'manikur-pedikur' => 'Manikür', 'cilt-bakimi' => 'Cilt bakımı', 'makyaj' => 'Makyaj',
+        'manikur-pedikur' => 'Manikür', 'cilt-bakimi' => 'Cilt bakımı', 'makyaj' => 'Makyaj', 'masaj' => 'Masaj',
         'kas-kirpik' => 'Kaş & Kirpik', 'epilasyon' => 'Epilasyon', 'gelin' => 'Gelin',
     ];
 

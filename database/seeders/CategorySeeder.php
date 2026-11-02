@@ -12,6 +12,7 @@ class CategorySeeder extends Seeder
         'sac-kesim' => 'Saç Kesimi', 'sac-boya' => 'Saç Boyama', 'fon-sekillendirme' => 'Fön & Şekillendirme',
         'sakal' => 'Sakal & Tıraş', 'manikur-pedikur' => 'Manikür & Pedikür', 'cilt-bakimi' => 'Cilt Bakımı',
         'makyaj' => 'Makyaj', 'kas-kirpik' => 'Kaş & Kirpik', 'epilasyon' => 'Epilasyon & Ağda', 'gelin' => 'Gelin Paketleri',
+        'masaj' => 'Masaj',
     ];
 
     public function run(): void

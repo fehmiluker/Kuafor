@@ -32,7 +32,7 @@ final class SalonOnboardingService
 
     /** Keyword => platform category slug, used when a service row has no explicit category. */
     private const CATEGORY_KEYWORDS = [
-        'gelin' => 'gelin', 'nişan' => 'gelin', 'kına' => 'gelin',
+        'masaj' => 'masaj', 'gelin' => 'gelin', 'nişan' => 'gelin', 'kına' => 'gelin',
         'sakal' => 'sakal', 'tıraş' => 'sakal', 'ustura' => 'sakal',
         'boya' => 'sac-boya', 'balyaj' => 'sac-boya', 'röfle' => 'sac-boya', 'ombre' => 'sac-boya', 'keratin' => 'sac-boya',
         'fön' => 'fon-sekillendirme', 'topuz' => 'fon-sekillendirme', 'maşa' => 'fon-sekillendirme', 'şekillendirme' => 'fon-sekillendirme',

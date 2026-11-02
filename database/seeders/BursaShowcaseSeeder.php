@@ -7,6 +7,7 @@ use App\Enums\AppointmentStatus;
 use App\Enums\ApprovalMode;
 use App\Enums\ReviewStatus;
 use App\Enums\SubscriptionStatus;
+use App\Models\Branch;
 use App\Models\City;
 use App\Models\District;
 use App\Models\Plan;
@@ -42,7 +43,7 @@ class BursaShowcaseSeeder extends Seeder
         ]],
         ['Yaprak Güzellik Stüdyosu', 'nilufer', 'Özlüce Mah. Papatya Cad. No:21', 'Cilt bakımı, kaş-kirpik ve makyaj hizmetleri.', 'salon-2.jpg', ['Ece', 'Dilara'], [
             ['Klasik Cilt Bakımı', 60, '1100.00', 'cilt-bakimi'], ['Kaş Tasarımı', 20, '200.00', 'kas-kirpik'], ['Kirpik Lifting', 45, '700.00', 'kas-kirpik'],
-            ['Gece Makyajı', 60, '1500.00', 'makyaj'], ['Ağda (Tüm Bacak)', 40, '600.00', 'epilasyon'],
+            ['Gece Makyajı', 60, '1500.00', 'makyaj'], ['Ağda (Tüm Bacak)', 40, '600.00', 'epilasyon'], ['Klasik Masaj', 50, '1200.00', 'masaj'],
         ]],
         ['Usta Makas Erkek Kuaförü', 'osmangazi', 'Çekirge Mah. Çınar Sk. No:3', 'Klasik ve modern erkek kesimleri, sakal bakımı.', 'salon-3.jpg', ['Mehmet Usta', 'Can'], [
             ['Erkek Saç Kesimi', 30, '350.00', 'sac-kesim'], ['Sakal Tıraşı', 20, '200.00', 'sakal'], ['Saç + Sakal', 45, '500.00', 'sakal'],
@@ -66,7 +67,7 @@ class BursaShowcaseSeeder extends Seeder
         ]],
         ['Zeytin Dalı Güzellik', 'gemlik', 'Hamidiye Mah. Zeytin Sk. No:9', 'Bakım, epilasyon ve makyaj.', 'salon-8.jpg', ['Seda', 'İrem'], [
             ['Cilt Bakımı', 60, '950.00', 'cilt-bakimi'], ['Lazer Epilasyon (Bölge)', 30, '800.00', 'epilasyon'], ['Kaş Alımı', 15, '150.00', 'kas-kirpik'],
-            ['Günlük Makyaj', 45, '900.00', 'makyaj'], ['Fön', 30, '250.00', 'fon-sekillendirme'],
+            ['Günlük Makyaj', 45, '900.00', 'makyaj'], ['Fön', 30, '250.00', 'fon-sekillendirme'], ['Sırt-Boyun Masajı', 30, '700.00', 'masaj'],
         ]],
         ['Kestane Saç Stüdyosu', 'inegol', 'Mahmudiye Mah. Kestane Sk. No:14', 'İnegöl merkezde kadın kuaförü; kesim, renk ve bakım.', 'salon-2.jpg', ['Hande', 'Özge'], [
             ['Kadın Saç Kesimi', 45, '450.00', 'sac-kesim'], ['Fön', 30, '250.00', 'fon-sekillendirme'], ['Dip Boya', 90, '1200.00', 'sac-boya'],
@@ -78,7 +79,7 @@ class BursaShowcaseSeeder extends Seeder
         ]],
         ['İpek Yolu Güzellik Merkezi', 'osmangazi', 'Altıparmak Mah. Koza Sk. No:11', 'Cilt bakımı, lazer epilasyon ve kaş-kirpik uygulamaları.', 'salon-6.jpg', ['Burcu', 'Sevgi', 'Tuba'], [
             ['Hydrafacial', 75, '1700.00', 'cilt-bakimi'], ['Klasik Cilt Bakımı', 60, '1000.00', 'cilt-bakimi'], ['Lazer Epilasyon (Tüm Bacak)', 60, '1500.00', 'epilasyon'],
-            ['Ağda (Tüm Bacak)', 40, '550.00', 'epilasyon'], ['Kaş Laminasyonu', 45, '650.00', 'kas-kirpik'],
+            ['Ağda (Tüm Bacak)', 40, '550.00', 'epilasyon'], ['Kaş Laminasyonu', 45, '650.00', 'kas-kirpik'], ['Aromaterapi Masajı', 60, '1500.00', 'masaj'],
         ]],
         ['Badem Çiçeği Kuaför', 'gursu', 'Kurtuluş Mah. Badem Sk. No:7', 'Gürsu\'da kadın-erkek kuaför, fön ve boya.', 'salon-7.jpg', ['Aylin', 'Serkan'], [
             ['Kadın Saç Kesimi', 45, '420.00', 'sac-kesim'], ['Erkek Saç Kesimi', 30, '250.00', 'sac-kesim'], ['Fön', 30, '220.00', 'fon-sekillendirme'],
@@ -97,7 +98,7 @@ class BursaShowcaseSeeder extends Seeder
         ]],
         ['Şeftali Güzellik', 'mustafakemalpasa', 'Şeyhmüftü Mah. Şeftali Sk. No:3', 'Manikür, pedikür, ağda ve cilt bakımı.', 'salon-6.jpg', ['Derya', 'Fatma'], [
             ['Manikür', 40, '300.00', 'manikur-pedikur'], ['Pedikür', 50, '380.00', 'manikur-pedikur'], ['Ağda (Tüm Bacak)', 40, '400.00', 'epilasyon'],
-            ['Cilt Bakımı', 60, '750.00', 'cilt-bakimi'],
+            ['Cilt Bakımı', 60, '750.00', 'cilt-bakimi'], ['Klasik Masaj', 50, '900.00', 'masaj'],
         ]],
         ['Çamlık Saç Evi', 'karacabey', 'Runguşpaşa Mah. Çam Sk. No:10', 'Karacabey\'de aile kuaförü; kadın, erkek ve çocuk.', 'salon-1.jpg', ['Songül', 'Murat'], [
             ['Kadın Saç Kesimi', 45, '400.00', 'sac-kesim'], ['Erkek Saç Kesimi', 30, '250.00', 'sac-kesim'], ['Çocuk Saç Kesimi', 20, '180.00', 'sac-kesim'],
@@ -125,6 +126,7 @@ class BursaShowcaseSeeder extends Seeder
         'sakal' => ['Sıcak havlu ile tıraş çok rahatlatıcıydı.', 'Sakal şekli tam yüzüme göre oldu.', 'Usta işinin ehli, temiz iş.', 'Hızlı ve titiz.'],
         'manikur-pedikur' => ['Kalıcı oje üç hafta sorunsuz gitti.', 'Çok hijyenik bir ortam, içim rahat etti.', 'Tırnaklarım hiç bu kadar güzel olmamıştı.'],
         'cilt-bakimi' => ['Cildim ışıl ışıl oldu.', 'Bakım sırasında her adımı anlattılar.', 'Ortam çok huzurlu, tekrar geleceğim.'],
+        'masaj' => ['Masaj sonrası bütün yorgunluğum geçti.', 'Çok rahatlatıcı bir ortam, tekrar geleceğim.', 'Boyun ağrılarıma iyi geldi.'],
         'makyaj' => ['Makyaj fotoğraflarda kusursuz çıktı.', 'Doğal ve gün boyu kalıcı bir makyaj.', 'Tam istediğim gibi, abartısız.'],
         'kas-kirpik' => ['Kaş şekli yüzüme çok yakıştı.', 'Kirpiklerim çok doğal duruyor.', 'Lifting sonrası maskaraya gerek kalmadı.'],
         'epilasyon' => ['Neredeyse hiç acı hissetmedim.', 'Seanslar düzenli ve dakik.', 'Sonuçtan çok memnunum.'],
@@ -165,7 +167,12 @@ class BursaShowcaseSeeder extends Seeder
         $created = 0;
         foreach (self::SALONS as [$name, $districtSlug, $address, $description, $image, $staff, $services]) {
             $slug = Str::slug($name).'-bursa';
-            if (Tenant::withTrashed()->where('slug', $slug)->exists()) {
+            if ($existing = Tenant::withTrashed()->where('slug', $slug)->first()) {
+                // Services added to the list later (e.g. "Masaj") are added to salons from earlier runs.
+                if (! $existing->trashed()) {
+                    $this->addMissingServices($existing, $services);
+                }
+
                 continue;
             }
             $district = District::where('city_id', $city->id)->where('slug', $districtSlug)->first();
@@ -201,6 +208,26 @@ class BursaShowcaseSeeder extends Seeder
         }
 
         $this->command?->info("Bursa örnek işletmeleri: {$created} eklendi, {$reviewed} işletmeye örnek yorum eklendi".($removed ? ", listeden çıkan {$removed} örnek işletme kaldırıldı." : '.'));
+    }
+
+    /** @param list<array{0:string,1:int,2:string,3:string}> $services */
+    private function addMissingServices(Tenant $tenant, array $services): void
+    {
+        $have = DB::table('services')->where('tenant_id', $tenant->id)->whereNull('deleted_at')->pluck('name')->all();
+        $missing = array_filter($services, fn ($s) => ! in_array($s[0], $have, true));
+        $branch = Branch::withoutGlobalScopes()->where('tenant_id', $tenant->id)->orderBy('id')->first();
+        if ($missing === [] || ! $branch) {
+            return;
+        }
+        $b = SalonBuilder::make()->forTenant($tenant);
+        $employees = DB::table('employees')->where('tenant_id', $tenant->id)->whereNull('deleted_at')->pluck('id');
+        foreach ($missing as $s) {
+            $service = $b->service($s[0], $s[1], $s[2], [$branch], 0, $s[3]);
+            foreach ($employees as $employeeId) {
+                DB::table('employee_services')->insert(['tenant_id' => $tenant->id, 'employee_id' => $employeeId, 'service_id' => $service->id,
+                    'branch_id' => null, 'active' => true, 'created_at' => now(), 'updated_at' => now()]);
+            }
+        }
     }
 
     /**
