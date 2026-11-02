@@ -14,7 +14,12 @@
             <span class="absolute inset-0 grid place-items-center text-brand-300"><x-icon name="store" class="h-10 w-10" /></span>
         @endif
         <span class="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-900 shadow-sm">
-            @if($salon->is_showcase)Örnek işletme@elseif($salon->rating_count)<span class="text-amber-500">★</span>{{ number_format((float) $salon->rating_avg, 1, ',', '') }} <span class="font-medium text-slate-500">({{ $salon->rating_count }})</span>@else Yeni @endif
+            @if($salon->rating_count)
+                <span class="text-amber-500">★</span>{{ number_format((float) $salon->rating_avg, 1, ',', '') }}
+                <span class="font-medium text-slate-500">{{ $salon->is_showcase ? '· Örnek işletme' : '('.$salon->rating_count.')' }}</span>
+            @else
+                {{ $salon->is_showcase ? 'Örnek işletme' : 'Yeni' }}
+            @endif
         </span>
     </a>
     @if($salon->is_showcase)

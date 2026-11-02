@@ -31,7 +31,7 @@ class GeoSeeder extends Seeder
         6 => ['Altındağ', 'Çankaya', 'Etimesgut', 'Gölbaşı', 'Keçiören', 'Mamak', 'Pursaklar', 'Sincan', 'Yenimahalle'],
         35 => ['Balçova', 'Bayraklı', 'Bornova', 'Buca', 'Çiğli', 'Gaziemir', 'Karşıyaka', 'Karabağlar', 'Konak', 'Narlıdere', 'Urla', 'Çeşme'],
         7 => ['Aksu', 'Alanya', 'Döşemealtı', 'Kemer', 'Kepez', 'Konyaaltı', 'Manavgat', 'Muratpaşa'],
-        16 => ['Gemlik', 'İnegöl', 'Mudanya', 'Nilüfer', 'Osmangazi', 'Yıldırım'],
+        16 => ['Gemlik', 'Gürsu', 'İnegöl', 'Karacabey', 'Kestel', 'Mudanya', 'Mustafakemalpaşa', 'Nilüfer', 'Orhangazi', 'Osmangazi', 'Yıldırım'],
     ];
 
     public function run(): void

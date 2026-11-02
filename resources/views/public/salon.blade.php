@@ -4,7 +4,7 @@
 @section('canonical', route('salon.show', $tenant->slug))
 @section('content')
 @php $schema = ['@context' => 'https://schema.org', '@type' => 'HairSalon', 'name' => $tenant->name, 'url' => route('salon.show', $tenant->slug)]
-    + ($tenant->rating_count ? ['aggregateRating' => ['@type' => 'AggregateRating', 'ratingValue' => (float) $tenant->rating_avg, 'reviewCount' => $tenant->rating_count]] : [])
+    + ($tenant->rating_count && ! $tenant->is_showcase ? ['aggregateRating' => ['@type' => 'AggregateRating', 'ratingValue' => (float) $tenant->rating_avg, 'reviewCount' => $tenant->rating_count]] : [])
     + ($branches->first()?->address ? ['address' => $branches->first()->address] : []); @endphp
 <script type="application/ld+json">{!! json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 <div class="overflow-hidden rounded-3xl bg-white shadow-lg shadow-slate-100/50 ring-1 ring-slate-200">
@@ -57,11 +57,16 @@
         @endforeach
 
         <section class="card p-5" aria-labelledby="rev-h">
-            <h2 id="rev-h" class="text-lg font-bold text-slate-900">Doğrulanmış değerlendirmeler</h2>
-            <p class="text-xs text-slate-500">Yalnızca bu salonda randevusu tamamlanan müşteriler değerlendirme yazabilir.</p>
+            @if($tenant->is_showcase)
+                <h2 id="rev-h" class="text-lg font-bold text-slate-900">Örnek değerlendirmeler</h2>
+                <p class="text-xs text-slate-500">Bu yorumlar örnek işletmenin görünümünü göstermek için hazırlanmış tanıtım metinleridir; gerçek müşteri değerlendirmesi değildir.</p>
+            @else
+                <h2 id="rev-h" class="text-lg font-bold text-slate-900">Doğrulanmış değerlendirmeler</h2>
+                <p class="text-xs text-slate-500">Yalnızca bu salonda randevusu tamamlanan müşteriler değerlendirme yazabilir.</p>
+            @endif
             @forelse($reviews as $r)
                 <article class="mt-4 border-t border-slate-100 pt-4">
-                    <div class="flex items-center justify-between"><p class="font-medium">{{ $r->authorDisplayName() }} <span class="badge bg-emerald-50 text-emerald-700">✓ Doğrulanmış</span></p><x-stars :value="$r->rating" /></div>
+                    <div class="flex items-center justify-between"><p class="font-medium">{{ $r->authorDisplayName() }} @if($tenant->is_showcase)<span class="badge bg-amber-50 text-amber-800">Örnek yorum</span>@else<span class="badge bg-emerald-50 text-emerald-700">✓ Doğrulanmış</span>@endif</p><x-stars :value="$r->rating" /></div>
                     @if($r->body)<p class="mt-1 text-sm text-slate-700">{{ $r->body }}</p>@endif
                     <p class="mt-1 text-xs text-slate-400">{{ $r->created_at->locale('tr')->diffForHumans() }} @if($r->employee) · {{ $r->employee->display_name }} @endif</p>
                     @if($r->reply)<div class="mt-2 rounded-lg bg-slate-50 p-3 text-sm"><p class="text-xs font-semibold text-slate-600">İşletmenin yanıtı</p><p>{{ $r->reply->body }}</p></div>@endif
