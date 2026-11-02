@@ -80,10 +80,6 @@ class BursaShowcaseSeeder extends Seeder
             ['Hydrafacial', 75, '1700.00', 'cilt-bakimi'], ['Klasik Cilt Bakımı', 60, '1000.00', 'cilt-bakimi'], ['Lazer Epilasyon (Tüm Bacak)', 60, '1500.00', 'epilasyon'],
             ['Ağda (Tüm Bacak)', 40, '550.00', 'epilasyon'], ['Kaş Laminasyonu', 45, '650.00', 'kas-kirpik'],
         ]],
-        ['Ardıç Erkek Kuaförü', 'yildirim', 'Değirmenönü Mah. Ardıç Sk. No:4', 'Mahallenin berberi: hızlı, temiz ve uygun fiyatlı.', 'salon-4.jpg', ['Hasan Usta', 'Furkan'], [
-            ['Erkek Saç Kesimi', 30, '280.00', 'sac-kesim'], ['Sakal Tıraşı', 20, '170.00', 'sakal'], ['Çocuk Saç Kesimi', 20, '200.00', 'sac-kesim'],
-            ['Ense Tıraşı', 10, '100.00', 'sakal'],
-        ]],
         ['Badem Çiçeği Kuaför', 'gursu', 'Kurtuluş Mah. Badem Sk. No:7', 'Gürsu\'da kadın-erkek kuaför, fön ve boya.', 'salon-7.jpg', ['Aylin', 'Serkan'], [
             ['Kadın Saç Kesimi', 45, '420.00', 'sac-kesim'], ['Erkek Saç Kesimi', 30, '250.00', 'sac-kesim'], ['Fön', 30, '220.00', 'fon-sekillendirme'],
             ['Dip Boya', 90, '1100.00', 'sac-boya'],
@@ -110,10 +106,6 @@ class BursaShowcaseSeeder extends Seeder
         ['Göl Kıyısı Kuaför', 'orhangazi', 'Yeni Mah. Göl Cad. No:15', 'İznik Gölü yolu üzerinde kadın kuaförü.', 'salon-7.jpg', ['Gülşen', 'Neslihan'], [
             ['Kadın Saç Kesimi', 45, '420.00', 'sac-kesim'], ['Fön', 30, '220.00', 'fon-sekillendirme'], ['Ombre', 150, '2400.00', 'sac-boya'],
             ['Manikür', 40, '300.00', 'manikur-pedikur'],
-        ]],
-        ['Atlas Erkek Bakım Salonu', 'nilufer', 'Ataevler Mah. Atlas Sk. No:2', 'Modern erkek kesimleri, sakal ve cilt bakımı.', 'salon-4.jpg', ['Barış', 'Onur', 'Deniz'], [
-            ['Fade Kesim', 40, '420.00', 'sac-kesim'], ['Sakal Şekillendirme', 20, '220.00', 'sakal'], ['Saç + Sakal', 50, '580.00', 'sakal'],
-            ['Erkek Cilt Bakımı', 30, '450.00', 'cilt-bakimi'], ['Saç Boyama (Erkek)', 45, '650.00', 'sac-boya'],
         ]],
         ['Mor Salkım Nail Bar', 'osmangazi', 'Hamitler Mah. Salkım Sk. No:9', 'Kalıcı oje, protez tırnak ve nail art.', 'salon-6.jpg', ['Ceren', 'Damla'], [
             ['Kalıcı Oje', 45, '480.00', 'manikur-pedikur'], ['Protez Tırnak', 90, '1150.00', 'manikur-pedikur'], ['Nail Art (10 tırnak)', 30, '350.00', 'manikur-pedikur'],
@@ -161,6 +153,15 @@ class BursaShowcaseSeeder extends Seeder
             $city->districts()->firstOrCreate(['slug' => Str::slug($d)], ['name' => $d]);
         }
 
+        // Showcase salons dropped from the list (e.g. 22 -> 20) are removed like `--kaldir` does.
+        $slugs = array_map(fn ($salon) => Str::slug($salon[0]).'-bursa', self::SALONS);
+        $removed = 0;
+        Tenant::where('is_showcase', true)->whereNotIn('slug', $slugs)->each(function (Tenant $t) use (&$removed) {
+            $t->forceFill(['public_listing_enabled' => false])->save();
+            $t->delete();
+            $removed++;
+        });
+
         $created = 0;
         foreach (self::SALONS as [$name, $districtSlug, $address, $description, $image, $staff, $services]) {
             $slug = Str::slug($name).'-bursa';
@@ -169,7 +170,7 @@ class BursaShowcaseSeeder extends Seeder
             }
             $district = District::where('city_id', $city->id)->where('slug', $districtSlug)->first();
             // Placeholder owner; random password, unusable mailbox (.invalid).
-            $owner = User::create(['name' => $name.' (örnek)', 'email' => 'ornek+'.$slug.'@kuaforrandevu.invalid', 'password' => Hash::make(Str::random(40))]);
+            $owner = User::firstOrCreate(['email' => 'ornek+'.$slug.'@kuaforrandevu.invalid'], ['name' => $name.' (örnek)', 'password' => Hash::make(Str::random(40))]);
 
             $b = SalonBuilder::make()->tenant($name, $plan, $owner, ['slug' => $slug, 'is_showcase' => true, 'description' => $description]);
             $branch = $b->branch('Merkez', ['address' => $address, 'city_id' => $city->id, 'district_id' => $district?->id, 'phone' => null],
@@ -199,7 +200,7 @@ class BursaShowcaseSeeder extends Seeder
             $reviewed++;
         }
 
-        $this->command?->info("Bursa örnek işletmeleri: {$created} eklendi, {$reviewed} işletmeye örnek yorum eklendi.");
+        $this->command?->info("Bursa örnek işletmeleri: {$created} eklendi, {$reviewed} işletmeye örnek yorum eklendi".($removed ? ", listeden çıkan {$removed} örnek işletme kaldırıldı." : '.'));
     }
 
     /**

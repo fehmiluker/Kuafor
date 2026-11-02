@@ -59,4 +59,18 @@ class ShowcaseSalonsTest extends TestCase
         $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
         $this->assertGreaterThan(0, $tenant->refresh()->rating_count);
     }
+
+    public function test_there_are_twenty_and_salons_dropped_from_the_list_are_removed(): void
+    {
+        $this->assertCount(20, BursaShowcaseSeeder::SALONS);
+        $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
+        $old = Tenant::where('is_showcase', true)->firstOrFail();
+        $old->forceFill(['slug' => 'eski-ornek-bursa'])->save();
+        $real = Tenant::where('is_showcase', true)->skip(1)->firstOrFail();
+        $real->forceFill(['is_showcase' => false])->save(); // a real salon is never touched
+
+        $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
+        $this->assertSoftDeleted($old);
+        $this->assertNotSoftDeleted($real);
+    }
 }

@@ -36,9 +36,9 @@ Kuyruk (`queue:work`) ve zamanlayıcı (`schedule:work`) için [docs/deployment.
 | İşletme sahibi (Standart, listelemeye kapalı) | `sahip@denizguzellik.test` |
 | Müşteri | `musteri@example.test` |
 
-**Örnek işletmeler (Bursa):** Pazar yeri boş görünmesin diye 11 ilçede 22 kurgusal salon; listelenir ama randevu alınamaz. Kartta ve sayfada "Örnek işletme", yorumlarda "Örnek yorum" etiketi bulunur; puanları arama motorlarına yapısal veri olarak verilmez. Canlıda da çalışır:
+**Örnek işletmeler (Bursa):** Pazar yeri boş görünmesin diye 11 ilçede 20 kurgusal salon; listelenir ama randevu alınamaz. Kartta ve sayfada "Örnek işletme", yorumlarda "Örnek yorum" etiketi bulunur; puanları arama motorlarına yapısal veri olarak verilmez. Canlıda da çalışır:
 ```bash
-php artisan kuafor:ornek-isletmeler           # ekle (tekrar çalıştırmak güvenli; eksik salon ve yorumları tamamlar)
+php artisan kuafor:ornek-isletmeler           # ekle (tekrar çalıştırmak güvenli; eksikleri tamamlar, listeden çıkarılanları kaldırır)
 php artisan kuafor:ornek-isletmeler --kaldir  # gerçek salonlar katılınca kaldır
 ```
 
