@@ -217,4 +217,22 @@ class SalonOnboardingTest extends TestCase
         Notification::assertSentOnDemand(SalonApplicationRejected::class, fn ($n, $c, $notifiable) => $notifiable->routes['mail'] === 'derya@papatya.test');
         $this->get(route('admin.onboarding.applications', ['durum' => 'rejected']))->assertSee('Papatya Güzellik');
     }
+
+    public function test_invitation_survives_the_password_reset_token_cleanup(): void
+    {
+        $this->asAdminWeb()->post(route('admin.onboarding.run'), ['token' => $this->previewToken(), 'invite' => 1]);
+        $owner = User::where('email', 'ayse@isik.test')->firstOrFail();
+        $token = null;
+        Notification::assertSentTo($owner, SalonInvitation::class, function (SalonInvitation $n) use (&$token) {
+            $token = $n->token;
+
+            return true;
+        });
+        auth()->logout();
+
+        $this->travel(2)->hours();
+        $this->artisan('auth:clear-resets')->assertSuccessful(); // 60-minute password resets only
+        $this->post(route('invite.accept'), ['token' => $token, 'email' => $owner->email, 'password' => 'YeniSifre123', 'password_confirmation' => 'YeniSifre123'])
+            ->assertRedirect(route('login'))->assertSessionHasNoErrors();
+    }
 }

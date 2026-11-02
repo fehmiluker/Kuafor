@@ -45,6 +45,13 @@ class BranchRequest extends ApiFormRequest
             'working_hours.*.closes' => ['required_with:working_hours', 'date_format:H:i', 'after:working_hours.*.opens'],
             'whatsapp_manager_numbers' => ['sometimes', 'array', 'max:5'],
             'whatsapp_manager_numbers.*' => [new Phone],
+            'home_service_enabled' => ['sometimes', 'boolean'],
+            'home_requires_approval' => ['sometimes', 'boolean'],
+            'home_travel_minutes' => ['nullable', 'integer', 'between:0,240'],
+            'home_min_total' => ['nullable', 'regex:/^\d{1,10}([.,]\d{1,2})?$/'],
+            'home_areas' => ['sometimes', 'array', 'max:100'],
+            'home_areas.*.district_id' => ['required', 'integer', 'exists:districts,id'],
+            'home_areas.*.fee' => ['nullable', 'regex:/^\d{1,10}([.,]\d{1,2})?$/'],
         ];
     }
 }

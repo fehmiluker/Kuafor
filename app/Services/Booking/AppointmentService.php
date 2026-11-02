@@ -28,6 +28,7 @@ use App\Exceptions\DomainRuleException;
 use App\Exceptions\InvalidTransitionException;
 use App\Models\ActionToken;
 use App\Models\Appointment;
+use App\Models\AppointmentAddress;
 use App\Models\AppointmentItem;
 use App\Models\AppointmentPayment;
 use App\Models\AppointmentProposal;
@@ -64,6 +65,7 @@ final class AppointmentService
         private readonly ActionTokenService $actionTokens,
         private readonly EntitlementService $entitlements,
         private readonly ConsentService $consents,
+        private readonly HomeVisitRules $homeRules,
     ) {}
 
     /**
@@ -86,9 +88,11 @@ final class AppointmentService
         $branch->setRelation('tenant', $tenant);
         $settings = BookingSettings::for($tenant, $branch);
         $services = $this->resolver->servicesForBranch($branch, $data->serviceIds);
-        $candidates = $this->resolver->qualifiedEmployees($branch, $services->keys()->all(), $data->employeeId);
+        $home = $data->homeVisit;
+        $travelFee = $home ? $this->homeRules->assertBookable($branch, $home, $services) : Money::zero();
+        $candidates = $this->resolver->qualifiedEmployees($branch, $services->keys()->all(), $data->employeeId, homeOnly: $home !== null);
         if ($candidates->isEmpty()) {
-            throw new DomainRuleException('Seçilen hizmetleri yapabilecek uygun personel bulunamadı.', 'invalid_employee');
+            throw new DomainRuleException($home ? 'Seçilen hizmetler için adrese gelebilecek personel bulunamadı.' : 'Seçilen hizmetleri yapabilecek uygun personel bulunamadı.', 'invalid_employee');
         }
 
         $customer = $this->resolveCustomer($tenant, $data);
@@ -102,10 +106,17 @@ final class AppointmentService
         $start = $data->startsAtUtc->utc()->startOfMinute();
         $ordered = $this->orderCandidates($branch, $candidates, $start);
         $mode = $data->byStaff ? ApprovalMode::Automatic : $settings->approvalMode;
+        if ($home && ! $data->byStaff && $branch->home_requires_approval) {
+            $mode = ApprovalMode::Manual; // the salon chose to confirm every home visit
+        }
 
         $lastReason = 'slot_unavailable';
         foreach ($ordered as $employee) {
             $quote = $this->resolver->quote($branch, $employee, $services);
+            if ($home) {
+                $quote = $quote->withTravel((int) $branch->home_travel_minutes);
+                $this->homeRules->assertMinimum($branch, $quote->subtotal());
+            }
             // Cheap pre-check outside the lock to skip obviously busy employees.
             if (($reason = $this->availability->checkSlot($branch, $employee, $quote, $start, null, ! $data->byStaff)) !== null) {
                 $lastReason = $reason;
@@ -114,8 +125,9 @@ final class AppointmentService
             }
             try {
                 $end = $start->addMinutes($quote->durationMinutes());
-                $blockedUntil = $end->addMinutes($quote->bufferMinutes());
-                $appointment = $this->locks->withEmployeeLocks($tenant->id, $branch->timezone, [['employee_id' => $employee->id, 'start' => $start, 'end' => $blockedUntil]], function () use ($tenant, $branch, $employee, $quote, $start, $end, $blockedUntil, $customer, $data, $mode, $settings) {
+                $blockedUntil = $end->addMinutes($quote->blockedAfterMinutes());
+                $blockedFrom = $start->subMinutes($quote->travelMinutes);
+                $appointment = $this->locks->withEmployeeLocks($tenant->id, $branch->timezone, [['employee_id' => $employee->id, 'start' => $blockedFrom, 'end' => $blockedUntil]], function () use ($tenant, $branch, $employee, $quote, $start, $end, $blockedFrom, $blockedUntil, $customer, $data, $mode, $settings, $home, $travelFee) {
 
                     if (($reason = $this->availability->checkSlot($branch, $employee, $quote, $start, null, ! $data->byStaff)) !== null) {
                         throw new BookingConflictException(reason: $reason);
@@ -137,7 +149,10 @@ final class AppointmentService
                         'approval_mode_snapshot' => $mode,
                         'subtotal' => $subtotal,
                         'discount' => Money::zero(),
-                        'total_price' => $subtotal,
+                        'total_price' => $subtotal->plus($travelFee),
+                        'location_type' => $home ? 'address' : 'salon',
+                        'travel_minutes' => $quote->travelMinutes,
+                        'travel_fee' => $travelFee,
                         'currency' => 'TRY',
                         'customer_note' => $data->customerNote,
                         'source' => $data->source,
@@ -160,8 +175,16 @@ final class AppointmentService
                         ]);
                     }
 
+                    if ($home) {
+                        AppointmentAddress::withoutGlobalScopes()->create([
+                            'tenant_id' => $tenant->id, 'appointment_id' => $appointment->id, 'district_id' => $home->districtId,
+                            'place_type' => $home->placeType, 'address_line' => trim($home->addressLine),
+                            'address_detail' => $home->addressDetail !== null && trim($home->addressDetail) !== '' ? trim($home->addressDetail) : null,
+                        ]);
+                    }
+
                     if ($status === AppointmentStatus::Pending) {
-                        $this->createHold($appointment, $start, $blockedUntil, $appointment->pending_expires_at_utc, null, $data->idempotencyKey ? 'appt:'.$data->idempotencyKey : null);
+                        $this->createHold($appointment, $blockedFrom, $blockedUntil, $appointment->pending_expires_at_utc, null, $data->idempotencyKey ? 'appt:'.$data->idempotencyKey : null);
                     }
 
                     // Consents are stored in the same transaction, i.e. before any notification event fires.
@@ -256,18 +279,19 @@ final class AppointmentService
     {
         $employeeId ??= $appointment->employee_id;
         $branch = $this->branchOf($appointment);
-        $employee = $this->resolver->qualifiedEmployees($branch, $this->itemsOf($appointment)->pluck('service_id')->filter()->all(), $employeeId)->first();
+        $employee = $this->resolver->qualifiedEmployees($branch, $this->itemsOf($appointment)->pluck('service_id')->filter()->all(), $employeeId, homeOnly: $appointment->isHomeVisit())->first();
         if (! $employee) {
             throw new DomainRuleException('Seçilen personel bu hizmetleri veremiyor.', 'invalid_employee');
         }
         $quote = $this->quoteFor($appointment, $branch, $employee);
         $start = $startUtc->utc()->startOfMinute();
         $end = $start->addMinutes($quote->durationMinutes());
-        $blockedUntil = $end->addMinutes($quote->bufferMinutes());
+        $blockedUntil = $end->addMinutes($quote->blockedAfterMinutes());
+        $blockedFrom = $start->subMinutes($quote->travelMinutes);
         $settings = BookingSettings::for($appointment->tenant()->first(), $branch);
         $plain = Token::generate(48);
 
-        $proposal = $this->locks->withEmployeeLocks($appointment->tenant_id, $branch->timezone, [['employee_id' => $employee->id, 'start' => $start, 'end' => $blockedUntil]], function () use ($appointment, $branch, $employee, $quote, $start, $end, $blockedUntil, $actor, $note, $settings, $plain) {
+        $proposal = $this->locks->withEmployeeLocks($appointment->tenant_id, $branch->timezone, [['employee_id' => $employee->id, 'start' => $blockedFrom, 'end' => $blockedUntil]], function () use ($appointment, $branch, $employee, $quote, $start, $end, $blockedFrom, $blockedUntil, $actor, $note, $settings, $plain) {
             $a = $this->lockRow($appointment);
             $this->assertTransition($a, AppointmentStatus::AlternativeProposed, [AppointmentStatus::Pending, AppointmentStatus::AlternativeProposed]);
             // Only one open proposal: withdraw the previous one (and free its hold) first.
@@ -291,7 +315,7 @@ final class AppointmentService
                 'token_hash' => Token::hash($plain),
                 'note' => $note,
             ]);
-            $this->createHold($a, $start, $blockedUntil, $expires, $proposal->id);
+            $this->createHold($a, $blockedFrom, $blockedUntil, $expires, $proposal->id);
             $from = $a->status;
             $a->forceFill(['status' => AppointmentStatus::AlternativeProposed, 'pending_expires_at_utc' => $expires])->save();
             $this->history($a, $from, AppointmentStatus::AlternativeProposed, $actor, $note, ['proposal_id' => $proposal->id]);
@@ -373,20 +397,21 @@ final class AppointmentService
     {
         $employeeId ??= $appointment->employee_id;
         $branch = $this->branchOf($appointment);
-        $employee = $this->resolver->qualifiedEmployees($branch, $this->itemsOf($appointment)->pluck('service_id')->filter()->all(), $employeeId)->first();
+        $employee = $this->resolver->qualifiedEmployees($branch, $this->itemsOf($appointment)->pluck('service_id')->filter()->all(), $employeeId, homeOnly: $appointment->isHomeVisit())->first();
         if (! $employee) {
             throw new DomainRuleException('Seçilen personel bu hizmetleri veremiyor.', 'invalid_employee');
         }
         $quote = $this->quoteFor($appointment, $branch, $employee);
         $start = $startUtc->utc()->startOfMinute();
         $end = $start->addMinutes($quote->durationMinutes());
-        $blockedUntil = $end->addMinutes($quote->bufferMinutes());
+        $blockedUntil = $end->addMinutes($quote->blockedAfterMinutes());
+        $blockedFrom = $start->subMinutes($quote->travelMinutes);
         $old = ['starts_at_utc' => $appointment->starts_at_utc->toIso8601String(), 'employee_id' => $appointment->employee_id];
 
         // Lock both the old and the new resource-days (sorted inside the lock service).
         $appointment = $this->locks->withEmployeeLocks($appointment->tenant_id, $branch->timezone, [
-            ['employee_id' => $appointment->employee_id, 'start' => $appointment->starts_at_utc, 'end' => $appointment->blocked_until_utc],
-            ['employee_id' => $employee->id, 'start' => $start, 'end' => $blockedUntil],
+            ['employee_id' => $appointment->employee_id, 'start' => $appointment->starts_at_utc->subMinutes((int) $appointment->travel_minutes), 'end' => $appointment->blocked_until_utc],
+            ['employee_id' => $employee->id, 'start' => $blockedFrom, 'end' => $blockedUntil],
         ], function () use ($appointment, $branch, $employee, $quote, $start, $end, $blockedUntil, $actor, $byStaff, $old) {
             $a = $this->lockRow($appointment);
             $this->assertTransition($a, AppointmentStatus::Confirmed, [AppointmentStatus::Confirmed]);
@@ -590,7 +615,7 @@ final class AppointmentService
         $items = $this->itemsOf($a);
         $lines = $items->map(fn (AppointmentItem $i) => new ServiceLine((int) $i->service_id, $i->service_name_snapshot, $i->duration_minutes_snapshot, $i->buffer_minutes_snapshot, $i->unit_price_snapshot))->all();
 
-        return new Quote($employee->id, $lines, (int) $employee->buffer_minutes);
+        return new Quote($employee->id, $lines, (int) $employee->buffer_minutes, (int) $a->travel_minutes);
     }
 
     private function branchOf(Appointment $a): Branch

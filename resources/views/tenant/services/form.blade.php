@@ -11,6 +11,7 @@
         <x-input name="buffer_minutes" label="Hazırlık tamponu (dk)" type="number" min="0" max="240" :value="$service?->buffer_minutes ?? 0" help="Randevudan sonra bir sonraki müşteriye kadar ayrılan süre." />
         <x-input name="base_price" label="Fiyat (₺)" inputmode="decimal" :value="$service?->base_price?->toDecimal()" required />
         <label class="flex items-center gap-2 pt-7 text-sm"><input type="hidden" name="active" value="0"><input type="checkbox" name="active" value="1" @checked(old('active', $service?->active ?? true))> Online randevuya açık</label>
+        <label class="flex items-center gap-2 pt-7 text-sm"><input type="hidden" name="home_available" value="0"><input type="checkbox" name="home_available" value="1" @checked(old('home_available', $service?->home_available ?? false))> 🏠 Adreste de yapılabilir</label>
         <div class="sm:col-span-2"><x-input type="textarea" name="description" label="Açıklama" :value="$service?->description" /></div>
     </div>
     <fieldset><legend class="label">Sunulduğu şubeler ve şubeye özel fiyat/süre</legend>

@@ -5,6 +5,7 @@
     $place = $branch ? collect([$branch->district?->name, $branch->city?->name])->filter()->implode(', ') : null;
     $fav = $cards->isFavorite($salon, auth()->user());
     $tags = $cards->tags($salon);
+    $home = $cards->offersHome($salon);
 @endphp
 <article class="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
     <a href="{{ route('salon.show', $salon->slug) }}" class="relative block h-[107px] bg-gradient-to-br from-brand-100 via-slate-100 to-brand-50 sm:h-36" tabindex="-1" aria-hidden="true">
@@ -33,8 +34,8 @@
     <div class="flex flex-1 flex-col px-2.5 pb-2.5 pt-2 sm:px-3 sm:pb-3">
         <h3 class="truncate text-[14.5px] font-extrabold text-slate-900 sm:text-base"><a href="{{ route('salon.show', $salon->slug) }}" class="after:absolute after:inset-0 after:rounded-2xl after:content-[''] focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-500">{{ $salon->name }}</a></h3>
         @if($place)<p class="mt-0.5 flex items-center gap-1 truncate text-xs text-slate-600 sm:text-[13px]"><x-icon name="pin" class="h-3.5 w-3.5 shrink-0 text-brand-700" filled />{{ $place }}@if($salon->branches->count() > 1)<span class="hidden sm:inline">&nbsp;· {{ $salon->branches->count() }} şube</span>@endif</p>@endif
-        @if($tags)
-            <div class="mt-2 flex gap-1.5 overflow-hidden">@foreach($tags as $t)<span class="whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700 sm:text-xs">{{ $t }}</span>@endforeach</div>
+        @if($tags || $home)
+            <div class="mt-2 flex gap-1.5 overflow-hidden">@if($home)<span class="whitespace-nowrap rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 sm:text-xs" title="Adrese hizmet">🏠 Adrese</span>@endif @foreach($tags as $t)<span class="whitespace-nowrap rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700 sm:text-xs">{{ $t }}</span>@endforeach</div>
         @endif
     </div>
 </article>

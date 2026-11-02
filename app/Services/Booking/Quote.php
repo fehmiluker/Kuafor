@@ -12,7 +12,20 @@ final class Quote
         public readonly int $employeeId,
         public readonly array $lines,
         public readonly int $employeeBufferMinutes,
+        public readonly int $travelMinutes = 0,
     ) {}
+
+    /** Home visit: the employee is also blocked for travel before and after the visit. */
+    public function withTravel(int $minutes): self
+    {
+        return new self($this->employeeId, $this->lines, $this->employeeBufferMinutes, max(0, $minutes));
+    }
+
+    /** Minutes blocked after the service end: preparation buffer + travel back. */
+    public function blockedAfterMinutes(): int
+    {
+        return $this->bufferMinutes() + $this->travelMinutes;
+    }
 
     public function durationMinutes(): int
     {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use App\Enums\RecordStatus;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,10 @@ class Branch extends Model
             'settings' => 'array',
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
+            'home_service_enabled' => 'boolean',
+            'home_requires_approval' => 'boolean',
+            'home_travel_minutes' => 'integer',
+            'home_min_total' => MoneyCast::class,
         ];
     }
 
@@ -47,6 +52,11 @@ class Branch extends Model
     public function branchServices(): HasMany
     {
         return $this->hasMany(BranchService::class);
+    }
+
+    public function serviceAreas(): HasMany
+    {
+        return $this->hasMany(BranchServiceArea::class);
     }
 
     public function workingHours(): HasMany

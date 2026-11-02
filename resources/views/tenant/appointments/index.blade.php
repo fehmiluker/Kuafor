@@ -17,7 +17,7 @@
     @foreach($appointments as $a)
         <tr class="hover:bg-slate-50">
             <td><a href="{{ route('tenant.appointments.show', $a) }}" class="font-medium text-brand-700 hover:underline"><x-local-time :at="$a->starts_at_utc" :tz="$a->branch->timezone" format="d.m.Y H:i" /></a><span class="block text-xs text-slate-400">{{ $a->public_reference }}</span></td>
-            <td>{{ $a->customer->full_name }}</td><td>{{ $a->serviceSummary() }}</td><td>{{ $a->employee?->display_name }}</td><td>{{ $a->branch->name }}</td>
+            <td>{{ $a->customer->full_name }}</td><td>{{ $a->serviceSummary() }}</td><td>{{ $a->employee?->display_name }}</td><td>{{ $a->branch->name }}@if($a->isHomeVisit()) <span class="badge bg-brand-50 text-brand-700">🏠 Adreste</span>@endif</td>
             <td><x-status :status="$a->status" /></td><td class="text-right">{{ $a->total_price->format() }}</td>
         </tr>
     @endforeach

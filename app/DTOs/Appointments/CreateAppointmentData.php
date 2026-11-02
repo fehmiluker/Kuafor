@@ -28,5 +28,6 @@ final class CreateAppointmentData
         public readonly bool $marketingConsent = false,
         public readonly bool $whatsappOptIn = false,
         public readonly array $consentProof = [],
+        public readonly ?HomeVisit $homeVisit = null,
     ) {}
 }

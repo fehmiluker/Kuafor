@@ -11,7 +11,7 @@
     <div class="card mt-4 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <p class="font-semibold">{{ $tenants[$a->tenant_id]?->name }} — {{ $a->branch?->name }}</p>
-            <p class="text-sm text-slate-600"><x-local-time :at="$a->starts_at_utc" :tz="$a->branch->timezone" format="d F l, H:i" /> · {{ $a->serviceSummary() }} · {{ $a->employee?->display_name }}</p>
+            <p class="text-sm text-slate-600"><x-local-time :at="$a->starts_at_utc" :tz="$a->branch->timezone" format="d F l, H:i" /> · {{ $a->serviceSummary() }} · {{ $a->employee?->display_name }}@if($a->isHomeVisit()) · 🏠 Adresinizde @endif</p>
         </div>
         <div class="flex items-center gap-2"><x-status :status="$a->status" />
             <form method="POST" action="{{ route('account.appointments.cancel', $a->id) }}" onsubmit="return confirm('İptal edilsin mi?')">@csrf<button class="btn-secondary btn-sm">İptal et</button></form></div>

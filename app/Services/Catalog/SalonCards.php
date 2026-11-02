@@ -28,6 +28,9 @@ final class SalonCards
     /** @var array<int, true>|null */
     private ?array $favorites = null;
 
+    /** @var array<int, bool> tenant id => offers home visits */
+    private array $home = [];
+
     /** @param  iterable<Tenant>  $tenants */
     public function prime(iterable $tenants): self
     {
@@ -44,6 +47,16 @@ final class SalonCards
             ->distinct()->orderBy('service_categories.sort_order')->get();
         foreach ($ids as $id) {
             $this->tags[$id] = [];
+            $this->home[$id] = false;
+        }
+        $homeIds = DB::table('branches')->whereIn('branches.tenant_id', $ids)->where('branches.home_service_enabled', true)
+            ->where('branches.status', 'active')->whereNull('branches.deleted_at')
+            ->whereExists(fn ($a) => $a->from('branch_service_areas')->whereColumn('branch_service_areas.branch_id', 'branches.id'))
+            ->whereExists(fn ($s) => $s->from('services')->whereColumn('services.tenant_id', 'branches.tenant_id')
+                ->where('services.active', true)->where('services.home_available', true)->whereNull('services.deleted_at'))
+            ->distinct()->pluck('branches.tenant_id');
+        foreach ($homeIds as $id) {
+            $this->home[$id] = true;
         }
         foreach ($rows as $r) {
             $label = self::SHORT[$r->slug] ?? $r->name;
@@ -63,6 +76,15 @@ final class SalonCards
         }
 
         return $this->tags[$tenant->id];
+    }
+
+    public function offersHome(Tenant $tenant): bool
+    {
+        if (! array_key_exists($tenant->id, $this->home)) {
+            $this->prime([$tenant]);
+        }
+
+        return $this->home[$tenant->id] ?? false;
     }
 
     public function isFavorite(Tenant $tenant, ?User $user): bool

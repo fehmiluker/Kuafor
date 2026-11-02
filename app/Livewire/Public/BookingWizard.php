@@ -2,17 +2,22 @@
 
 namespace App\Livewire\Public;
 
+use App\DTOs\Appointments\HomeVisit;
 use App\Enums\AppointmentSource;
 use App\Exceptions\BookingConflictException;
 use App\Exceptions\DomainRuleException;
+use App\Models\Appointment;
+use App\Models\AppointmentAddress;
 use App\Models\Branch;
 use App\Models\CustomerFavorite;
 use App\Models\Employee;
 use App\Models\Tenant;
+use App\Models\TenantCustomer;
 use App\Rules\Phone;
 use App\Services\Auth\PhoneVerificationService;
 use App\Services\Booking\AvailabilityService;
 use App\Services\Booking\BookingSettings;
+use App\Services\Booking\HomeVisitRules;
 use App\Services\Booking\PublicBookingService;
 use App\Services\Catalog\BookingLinkService;
 use App\Services\Catalog\PublicCatalog;
@@ -79,6 +84,17 @@ class BookingWizard extends Component
 
     public string $website = ''; // honeypot
 
+    /** "salon" or "address" (home/workplace visit). */
+    public string $location = 'salon';
+
+    public ?int $districtId = null;
+
+    public string $placeType = 'home';
+
+    public string $addressLine = '';
+
+    public string $addressDetail = '';
+
     public ?array $result = null;
 
     public function mount(string $slug, PublicCatalog $catalog): void
@@ -94,12 +110,42 @@ class BookingWizard extends Component
             $this->branchId = $branches->count() === 1 ? $branches->first()->id : $requested;
             $this->step = 2;
         }
+        if (request()->query('yer') === 'adres' && $this->branchId && app(HomeVisitRules::class)->offers($this->branch())) {
+            $this->location = 'address';
+        }
         $this->prefill($catalog, (string) request()->query('hizmet', ''), (int) request()->query('personel'));
         $this->date = CarbonImmutable::now($branches->first()->timezone)->toDateString();
         if ($user = auth()->user()) {
             $this->fullName = $user->name;
             $this->phone = (string) $user->phone_e164;
             $this->email = (string) $user->email;
+            $this->prefillAddress($user->id);
+        }
+    }
+
+    /** Logged-in customer: last (not yet purged) address used at this salon. */
+    private function prefillAddress(int $userId): void
+    {
+        $last = AppointmentAddress::withoutGlobalScopes()->where('tenant_id', $this->tenantId)->whereNull('purged_at')
+            ->whereIn('appointment_id', Appointment::withoutGlobalScopes()->where('tenant_id', $this->tenantId)
+                ->whereIn('customer_id', TenantCustomer::withoutGlobalScopes()->where('tenant_id', $this->tenantId)->where('user_id', $userId)->select('id'))->select('id'))
+            ->latest('id')->first();
+        if ($last) {
+            $this->districtId = $last->district_id;
+            $this->placeType = $last->place_type;
+            $this->addressLine = (string) $last->address_line;
+            $this->addressDetail = (string) $last->address_detail;
+        }
+    }
+
+    public function setLocation(string $location): void
+    {
+        $location = $location === 'address' && $this->branchId && app(HomeVisitRules::class)->offers($this->branch()) ? 'address' : 'salon';
+        if ($location !== $this->location) {
+            $this->location = $location;
+            $this->serviceIds = [];
+            $this->employeeId = null;
+            $this->time = null;
         }
     }
 
@@ -119,13 +165,13 @@ class BookingWizard extends Component
             return;
         }
         $branch = $this->branch();
-        $offered = $catalog->services($branch)->pluck('id')->all();
+        $offered = $catalog->services($branch)->when($this->location === 'address', fn ($c) => $c->where('home_available', true))->pluck('id')->all();
         $this->serviceIds = array_slice(array_values(array_intersect($requested, $offered)), 0, (int) config('booking.max_services_per_appointment'));
         if ($this->serviceIds === []) {
             return;
         }
         $this->step = 3;
-        if ($employeeId && $catalog->employees($branch, $this->serviceIds)->contains('id', $employeeId)) {
+        if ($employeeId && $catalog->employees($branch, $this->serviceIds)->when($this->location === 'address', fn ($c) => $c->where('home_service', true))->contains('id', $employeeId)) {
             $this->employeeId = $employeeId;
             $this->step = 4;
         }
@@ -180,6 +226,15 @@ class BookingWizard extends Component
 
             return;
         }
+        if ($this->location === 'address' && ($min = $this->branch()?->home_min_total)) {
+            $sum = app(PublicCatalog::class)->services($this->branch())->whereIn('id', $this->serviceIds)
+                ->reduce(fn (Money $c, $s) => $c->plus($s->effective_price), Money::zero());
+            if ($min->greaterThan($sum)) {
+                $this->addError('serviceIds', 'Adrese hizmet için en düşük hizmet tutarı '.$min->format().'.');
+
+                return;
+            }
+        }
         $this->step = 3;
     }
 
@@ -232,6 +287,15 @@ class BookingWizard extends Component
             'note' => ['nullable', 'string', 'max:1000'],
             'kvkk' => ['accepted'],
         ], ['kvkk.accepted' => 'Devam etmek için aydınlatma metnini okuduğunuzu onaylayın.', 'fullName.required' => 'Ad soyad zorunludur.']);
+        if ($this->location === 'address') {
+            $areas = app(HomeVisitRules::class)->areas($this->branch());
+            $this->validate([
+                'districtId' => ['required', 'integer', 'in:'.$areas->keys()->implode(',')],
+                'placeType' => ['required', 'in:home,work'],
+                'addressLine' => ['required', 'string', 'min:5', 'max:300'],
+                'addressDetail' => ['nullable', 'string', 'max:300'],
+            ], ['districtId.required' => 'İlçe seçin.', 'districtId.in' => 'Salon bu ilçeye hizmet vermiyor.', 'addressLine.required' => 'Açık adres zorunludur.', 'addressLine.min' => 'Açık adresi biraz daha ayrıntılı yazın.']);
+        }
         $this->step = 6;
     }
 
@@ -260,6 +324,7 @@ class BookingWizard extends Component
                 'full_name' => $this->fullName, 'phone' => PhoneNumber::normalize($this->phone), 'email' => $this->email ?: null,
                 'note' => $this->note ?: null, 'whatsapp_opt_in' => $this->whatsappOptIn, 'marketing_opt_in' => $this->marketingOptIn,
                 'verification_code' => $this->code ?: null,
+                'home_visit' => $this->location === 'address' ? new HomeVisit((int) $this->districtId, $this->addressLine, $this->addressDetail ?: null, $this->placeType) : null,
             ], auth()->user(), AppointmentSource::Web, $this->idempotencyKey, request()->ip());
         } catch (BookingConflictException $e) {
             $this->addError('booking', $e->getMessage());
@@ -297,24 +362,32 @@ class BookingWizard extends Component
         $tenant = $this->tenant();
         $branches = $catalog->branches($tenant);
         $branch = $this->branch();
-        $services = $branch ? $catalog->services($branch) : collect();
+        $home = $this->location === 'address';
+        $rules = app(HomeVisitRules::class);
+        $areas = $branch && $rules->offers($branch) ? $rules->areas($branch) : collect();
+        $services = $branch ? $catalog->services($branch)->when($home, fn ($c) => $c->where('home_available', true)->values()) : collect();
         $selected = $services->whereIn('id', $this->serviceIds);
-        $employees = $branch && $this->serviceIds ? $catalog->employees($branch, $this->serviceIds) : collect();
+        $employees = $branch && $this->serviceIds ? $catalog->employees($branch, $this->serviceIds)->when($home, fn ($c) => $c->where('home_service', true)->values()) : collect();
         $slots = [];
         $slotError = null;
         if ($branch && $this->step >= 4 && $this->serviceIds) {
             try {
-                $slots = $availability->slotsForDay($branch, $this->serviceIds, $this->employeeId, $this->date);
+                $slots = $availability->slotsForDay($branch, $this->serviceIds, $this->employeeId, $this->date, homeVisit: $home);
             } catch (DomainRuleException $e) {
                 $slotError = $e->getMessage();
             }
         }
         $settings = $branch ? BookingSettings::for($tenant, $branch) : null;
 
+        $subtotal = $selected->reduce(fn (Money $c, $s) => $c->plus($s->effective_price), Money::zero());
+        $travelFee = $home && $this->districtId && $areas->has($this->districtId) ? ($areas[$this->districtId]->travel_fee ?? Money::zero()) : Money::zero();
+
         return view('livewire.public.booking-wizard', [
+            'areas' => $areas, 'home' => $home, 'travelFee' => $travelFee, 'subtotal' => $subtotal,
+            'belowMinimum' => $home && $branch?->home_min_total && $branch->home_min_total->greaterThan($subtotal),
             'tenant' => $tenant, 'branches' => $branches, 'branch' => $branch, 'services' => $services,
             'selected' => $selected, 'employees' => $employees, 'slots' => $slots, 'slotError' => $slotError,
-            'total' => $selected->reduce(fn (Money $c, $s) => $c->plus($s->effective_price), Money::zero()),
+            'total' => $subtotal->plus($travelFee),
             'duration' => $selected->sum('effective_duration'),
             'employee' => $this->employeeId ? Employee::withoutGlobalScopes()->where('tenant_id', $this->tenantId)->find($this->employeeId) : null,
             'settings' => $settings,

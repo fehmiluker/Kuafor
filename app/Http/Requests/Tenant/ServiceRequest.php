@@ -28,6 +28,7 @@ class ServiceRequest extends ApiFormRequest
             'buffer_minutes' => ['nullable', 'integer', 'between:0,240'],
             'base_price' => [$req, 'regex:/^\d{1,10}([.,]\d{1,2})?$/'],
             'active' => ['sometimes', 'boolean'],
+            'home_available' => ['sometimes', 'boolean'],
             'branch_ids' => ['sometimes', 'array', new BelongsToCurrentTenant('branches')],
             'branch_ids.*' => ['integer'],
             'branch_overrides' => ['sometimes', 'array'],

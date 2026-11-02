@@ -91,7 +91,7 @@ class PanelAppointmentController extends PanelBaseController
     public function show(Request $request, Appointment $appointment, AvailabilityService $availability): View
     {
         $this->authorize('view', $appointment);
-        $appointment->load(['items', 'employee', 'customer', 'branch', 'histories', 'payments', 'openProposal', 'proposals', 'review.reply']);
+        $appointment->load(['items', 'employee', 'customer', 'branch', 'histories', 'payments', 'openProposal', 'proposals', 'review.reply', 'address.district.city']);
         $branch = $appointment->branch;
         $branch->setRelation('tenant', $this->tenant());
         $suggestions = [];
@@ -100,7 +100,7 @@ class PanelAppointmentController extends PanelBaseController
             $date = LocalTime::toLocal($appointment->starts_at_utc, $branch->timezone)->startOfDay();
             for ($d = 0; $d < 3 && count($suggestions) < 12; $d++) {
                 try {
-                    foreach ($availability->slotsForDay($branch, $serviceIds, null, $date->addDays($d)->toDateString(), false, new Exclusions($appointment->id)) as $slot) {
+                    foreach ($availability->slotsForDay($branch, $serviceIds, null, $date->addDays($d)->toDateString(), false, new Exclusions($appointment->id), $appointment->isHomeVisit()) as $slot) {
                         if (count($suggestions) < 12 && ! $slot['start']->equalTo($appointment->starts_at_utc)) {
                             $suggestions[] = $slot;
                         }
@@ -177,7 +177,7 @@ class PanelAppointmentController extends PanelBaseController
 
         return response()->json($rows->map(fn (Appointment $a) => [
             'id' => $a->id,
-            'title' => $a->customer->full_name.' — '.$a->serviceSummary(),
+            'title' => ($a->isHomeVisit() ? '🏠 ' : '').$a->customer->full_name.' — '.$a->serviceSummary(),
             'start' => $a->starts_at_utc->setTimezone($branch->timezone)->format('Y-m-d\TH:i:s'),
             'end' => $a->ends_at_utc->setTimezone($branch->timezone)->format('Y-m-d\TH:i:s'),
             'resourceId' => (string) $a->employee_id,

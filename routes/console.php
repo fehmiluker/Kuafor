@@ -15,6 +15,7 @@ Schedule::job(new SweepSubscriptions)->hourly()->onOneServer()->withoutOverlappi
 Schedule::job(new PurgeExpiredData)->dailyAt('03:30')->onOneServer();
 Schedule::command('queue:prune-failed --hours=720')->daily();
 Schedule::command('auth:clear-resets')->everyFifteenMinutes();
+Schedule::command('auth:clear-resets invites')->daily();
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
 
 // Health heartbeats used by `php artisan kuafor:check` (cron and queue worker are alive).

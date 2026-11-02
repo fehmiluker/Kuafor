@@ -102,7 +102,8 @@ return [
         // Salon owner invitations (bulk import / approved application): longer-lived set-password links.
         'invites' => [
             'provider' => 'users',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            // Own table: `auth:clear-resets` (users broker, 60 min) must not delete 7-day invitations.
+            'table' => 'salon_invite_tokens',
             'expire' => 10080,
             'throttle' => 0,
         ],

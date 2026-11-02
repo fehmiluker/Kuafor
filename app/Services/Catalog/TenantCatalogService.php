@@ -53,7 +53,14 @@ final class TenantCatalogService
                 $this->entitlements->assertCanAddBranch($tenant);
             }
             $branch ??= new Branch(['tenant_id' => $tenant->id]);
-            $attrs = collect($data)->only(['name', 'phone', 'email', 'address', 'city_id', 'district_id', 'lat', 'lng', 'timezone', 'status'])->all();
+            $attrs = collect($data)->only(['name', 'phone', 'email', 'address', 'city_id', 'district_id', 'lat', 'lng', 'timezone', 'status',
+                'home_service_enabled', 'home_requires_approval', 'home_travel_minutes'])->all();
+            if (array_key_exists('home_min_total', $data)) {
+                $attrs['home_min_total'] = $data['home_min_total'] !== null && $data['home_min_total'] !== '' ? Money::parse((string) $data['home_min_total'])->toDecimal() : null;
+            }
+            if (array_key_exists('home_travel_minutes', $attrs) && $attrs['home_travel_minutes'] === null) {
+                $attrs['home_travel_minutes'] = 30;
+            }
             if (! $branch->exists || isset($data['slug'])) {
                 $attrs['slug'] = $this->uniqueBranchSlug($tenant, $data['slug'] ?? $data['name'] ?? $branch->name, $branch->id);
             }
@@ -62,6 +69,9 @@ final class TenantCatalogService
 
             if (array_key_exists('working_hours', $data)) {
                 $this->syncHours($branch, null, $data['working_hours']);
+            }
+            if (array_key_exists('home_areas', $data)) {
+                $this->syncServiceAreas($branch, $data['home_areas']);
             }
             if (array_key_exists('whatsapp_manager_numbers', $data)) {
                 $numbers = array_values(array_filter(array_map(fn ($n) => PhoneNumber::normalize((string) $n), (array) $data['whatsapp_manager_numbers'])));
@@ -84,6 +94,20 @@ final class TenantCatalogService
         $branch->forceFill(['status' => RecordStatus::Inactive])->save();
         $branch->delete();
         $this->audit->log('branch.deleted', $branch);
+    }
+
+    /** @param list<array{district_id:int, fee:?string}> $areas */
+    public function syncServiceAreas(Branch $branch, array $areas): void
+    {
+        $ids = array_map(fn ($a) => (int) $a['district_id'], $areas);
+        DB::table('branch_service_areas')->where('branch_id', $branch->id)->whereNotIn('district_id', $ids ?: [0])->delete();
+        foreach ($areas as $a) {
+            DB::table('branch_service_areas')->updateOrInsert(
+                ['branch_id' => $branch->id, 'district_id' => (int) $a['district_id']],
+                ['tenant_id' => $branch->tenant_id, 'travel_fee' => isset($a['fee']) && $a['fee'] !== '' ? Money::parse((string) $a['fee'])->toDecimal() : '0.00',
+                    'updated_at' => now(), 'created_at' => now()],
+            );
+        }
     }
 
     /** @param list<array{day_of_week:int, opens:string, closes:string, branch_id?:int}> $rows */
@@ -115,7 +139,7 @@ final class TenantCatalogService
                     throw new DomainRuleException('Geçersiz kategori.', 'invalid_category');
                 }
             }
-            $attrs = collect($data)->only(['name', 'description', 'category_id', 'duration_minutes', 'buffer_minutes', 'base_price', 'active'])->all();
+            $attrs = collect($data)->only(['name', 'description', 'category_id', 'duration_minutes', 'buffer_minutes', 'base_price', 'active', 'home_available'])->all();
             $service->forceFill($attrs + ['tenant_id' => $tenant->id, 'currency' => 'TRY'])->save();
 
             if (array_key_exists('branch_ids', $data)) {
@@ -157,7 +181,7 @@ final class TenantCatalogService
                 $this->entitlements->assertCanAddEmployee($tenant);
             }
             $employee ??= new Employee(['tenant_id' => $tenant->id]);
-            $employee->forceFill(collect($data)->only(['display_name', 'bio', 'status', 'buffer_minutes'])->all() + ['tenant_id' => $tenant->id])->save();
+            $employee->forceFill(collect($data)->only(['display_name', 'bio', 'status', 'buffer_minutes', 'home_service'])->all() + ['tenant_id' => $tenant->id])->save();
 
             if (isset($data['photo']) && $data['photo'] instanceof UploadedFile) {
                 $employee->forceFill(['photo' => $this->storeImage($data['photo'], "tenants/{$tenant->id}/employees")])->save();

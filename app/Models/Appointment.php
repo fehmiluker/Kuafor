@@ -43,6 +43,8 @@ class Appointment extends Model
             'subtotal' => MoneyCast::class,
             'discount' => MoneyCast::class,
             'total_price' => MoneyCast::class,
+            'travel_fee' => MoneyCast::class,
+            'travel_minutes' => 'integer',
             'version' => 'integer',
         ];
     }
@@ -50,6 +52,16 @@ class Appointment extends Model
     public function getRouteKeyName(): string
     {
         return 'id';
+    }
+
+    public function address(): HasOne
+    {
+        return $this->hasOne(AppointmentAddress::class);
+    }
+
+    public function isHomeVisit(): bool
+    {
+        return $this->location_type === 'address';
     }
 
     public function branch(): BelongsTo

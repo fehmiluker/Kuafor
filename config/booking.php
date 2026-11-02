@@ -25,4 +25,8 @@ return [
     'transaction_attempts' => 3,
 
     'max_services_per_appointment' => 5,
+
+    // Home visits ("Adrese hizmet"): the street address is wiped this many days after the visit.
+    'home_address_retention_days' => (int) env('HOME_ADDRESS_RETENTION_DAYS', 90),
+
 ];

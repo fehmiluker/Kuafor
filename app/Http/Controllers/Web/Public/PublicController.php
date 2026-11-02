@@ -80,6 +80,7 @@ class PublicController extends Controller
             'tarih' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'], 'saat' => ['nullable', 'date_format:H:i'],
             'min' => ['nullable', 'numeric', 'min:0'], 'max' => ['nullable', 'numeric', 'min:0'],
             'sirala' => ['nullable', 'in:'.implode(',', SalonSearchService::SORTS)],
+            'evime' => ['nullable', 'boolean'],
         ]);
         $cityModel = $city ? City::where('slug', $city)->first() : null;
         $districtModel = $cityModel && $district ? District::where('city_id', $cityModel->id)->where('slug', $district)->first() : null;
@@ -89,6 +90,7 @@ class PublicController extends Controller
             'city' => $cityModel?->slug, 'district' => $districtModel?->slug, 'category' => $f['kategori'] ?? null,
             'service' => $f['hizmet'] ?? null, 'q' => $f['q'] ?? null, 'date' => $f['tarih'] ?? null, 'time' => $f['saat'] ?? null,
             'min_price' => $f['min'] ?? null, 'max_price' => $f['max'] ?? null, 'sort' => $f['sirala'] ?? 'rating',
+            'home' => (bool) ($f['evime'] ?? false),
         ]);
 
         app(SalonCards::class)->prime($results->getCollection());

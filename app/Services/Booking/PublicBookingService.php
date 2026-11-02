@@ -26,7 +26,9 @@ final class PublicBookingService
         $tenant = $branch->tenant;
         $settings = BookingSettings::for($tenant, $branch);
         $phoneVerified = $user && $user->phone_verified_at && $user->phone_e164 === $input['phone'];
-        if ($settings->requirePhoneVerification && ! $phoneVerified) {
+        $homeVisit = $input['home_visit'] ?? null;
+        // Home visits always need a verified phone (no staff sent to fake bookings).
+        if (($settings->requirePhoneVerification || $homeVisit) && ! $phoneVerified) {
             if (empty($input['verification_code']) || ! $this->otp->verify($input['phone'], 'booking', (string) $input['verification_code'])) {
                 throw new DomainRuleException('Telefon doğrulama kodu gerekli veya hatalı.', 'phone_verification_required');
             }
@@ -46,6 +48,7 @@ final class PublicBookingService
             idempotencyKey: $idempotencyKey,
             marketingConsent: (bool) ($input['marketing_opt_in'] ?? false),
             whatsappOptIn: (bool) ($input['whatsapp_opt_in'] ?? false),
+            homeVisit: $homeVisit,
             consentProof: ['ip_hash' => $ip ? hash_hmac('sha256', $ip, (string) config('app.key')) : null, 'text_version' => config('app.consent_text_version', '2026-01')],
         ));
 

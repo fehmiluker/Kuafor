@@ -30,7 +30,7 @@
         <div class="flex items-center justify-between"><h2 id="today-h" class="text-lg font-bold text-slate-900">Bugün</h2><a href="{{ route('tenant.calendar') }}" class="text-sm text-brand-700 hover:underline">Takvim</a></div>
         @forelse($today as $a)
             <a href="{{ route('tenant.appointments.show', $a) }}" class="mt-3 flex items-center justify-between rounded-xl border border-transparent p-3 hover:border-brand-100 hover:bg-brand-50">
-                <span><span class="font-medium"><x-local-time :at="$a->starts_at_utc" :tz="$a->branch->timezone" format="H:i" /> {{ $a->customer->full_name }}</span><span class="block text-xs text-slate-500">{{ $a->serviceSummary() }} · {{ $a->employee?->display_name }}</span></span>
+                <span><span class="font-medium"><x-local-time :at="$a->starts_at_utc" :tz="$a->branch->timezone" format="H:i" /> {{ $a->customer->full_name }}</span><span class="block text-xs text-slate-500">{{ $a->isHomeVisit() ? "🏠 " : "" }}{{ $a->serviceSummary() }} · {{ $a->employee?->display_name }}</span></span>
                 <x-status :status="$a->status" />
             </a>
         @empty

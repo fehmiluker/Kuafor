@@ -8,6 +8,7 @@
         <x-input name="display_name" label="Görünen ad" :value="$employee?->display_name" required />
         <div><label class="label" for="e-status">Durum</label><select id="e-status" name="status" class="input"><option value="active" @selected(($employee?->status->value ?? 'active') === 'active')>Aktif</option><option value="inactive" @selected($employee?->status->value === 'inactive')>Pasif</option></select></div>
         <x-input name="buffer_minutes" label="Randevular arası ek tampon (dk)" type="number" min="0" max="120" :value="$employee?->buffer_minutes ?? 0" />
+        <label class="flex items-center gap-2 pt-7 text-sm"><input type="hidden" name="home_service" value="0"><input type="checkbox" name="home_service" value="1" @checked(old('home_service', $employee?->home_service ?? false))> 🏠 Adrese hizmete gidebilir</label>
         <div><label class="label" for="e-photo">Fotoğraf</label><input id="e-photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="input"></div>
         <div class="sm:col-span-2"><x-input type="textarea" name="bio" label="Kısa tanıtım" :value="$employee?->bio" /></div>
     </div>

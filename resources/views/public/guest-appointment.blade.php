@@ -14,6 +14,11 @@
         </div>
         <dl class="mt-4 grid grid-cols-3 gap-2 text-sm">
             <dt class="text-slate-500">Tarih</dt><dd class="col-span-2 font-medium"><x-local-time :at="$a->starts_at_utc" :tz="$tz" format="d F Y l, H:i" /></dd>
+            @if($a->isHomeVisit())
+                @php $addr = \App\Models\AppointmentAddress::withoutGlobalScopes()->where('appointment_id', $a->id)->with('district.city')->first(); @endphp
+                <dt class="text-slate-500">🏠 Adres</dt><dd class="col-span-2">{{ $addr?->address_line ? $addr->address_line.($addr->address_detail ? ' ('.$addr->address_detail.')' : '').', '.$addr->district?->name : $addr?->shortLabel() }}<span class="block text-xs text-slate-500">Personel adresinize gelecek. Ödeme hizmet sonrası yapılır.</span></dd>
+                @if($a->travel_fee && ! $a->travel_fee->isZero())<dt class="text-slate-500">Ulaşım</dt><dd class="col-span-2">{{ $a->travel_fee->format() }}</dd>@endif
+            @endif
             <dt class="text-slate-500">Hizmet</dt><dd class="col-span-2">{{ $a->serviceSummary() }}</dd>
             <dt class="text-slate-500">Personel</dt><dd class="col-span-2">{{ $a->employee?->display_name }}</dd>
             <dt class="text-slate-500">Tutar</dt><dd class="col-span-2">{{ $a->total_price->format() }} <span class="text-xs text-slate-500">(salonda ödenir)</span></dd>

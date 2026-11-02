@@ -38,6 +38,7 @@
             <x-input name="tarih" label="Müsait tarih" type="date" :min="now('Europe/Istanbul')->toDateString()" :value="$filters['tarih'] ?? ''" />
             <x-input name="saat" label="Saatten sonra" type="time" :value="$filters['saat'] ?? ''" />
         </div>
+        <label class="flex items-center gap-2 rounded-lg bg-brand-50 p-3 text-sm font-semibold text-brand-800"><input type="checkbox" name="evime" value="1" @checked(! empty($filters['evime']))> 🏠 Evime / işyerime gelsin</label>
         <div><label class="label" for="s-sort">Sıralama</label><select id="s-sort" name="sirala" class="input">
             @foreach(['rating' => 'En yüksek puan', 'price_asc' => 'Fiyat (artan)', 'price_desc' => 'Fiyat (azalan)', 'name' => 'İsim', 'newest' => 'En yeni'] as $k => $l)<option value="{{ $k }}" @selected(($filters['sirala'] ?? 'rating') === $k)>{{ $l }}</option>@endforeach
         </select></div>

@@ -30,6 +30,44 @@
         </div>
     </fieldset>
     <x-input name="manager_numbers" label="WhatsApp bildirim alacak yönetici numaraları (virgülle)" :value="implode(', ', $managerNumbers)" help="Şubenin WhatsApp gönderici numarasından FARKLI olmalıdır; aynı numaraya bildirim gönderilmez, panel ve e-posta kullanılır." />
+
+    <fieldset class="space-y-3 rounded-xl bg-slate-50 p-4" x-data="{ on: {{ old('home_service_enabled', $branch?->home_service_enabled) ? 'true' : 'false' }} }">
+        <input type="hidden" name="home_form" value="1">
+        <legend class="sr-only">Adrese hizmet</legend>
+        <label class="flex items-center gap-2 font-semibold"><input type="checkbox" name="home_service_enabled" value="1" x-model="on"> 🏠 Adrese hizmet (müşterinin evine/işyerine gidilir)</label>
+        <div x-show="on" x-cloak class="space-y-3">
+            <p class="text-xs text-slate-600">Hangi hizmetlerin adreste yapılabileceğini <a href="{{ route('tenant.services.index') }}" class="underline">Hizmetler</a>, hangi personelin gideceğini <a href="{{ route('tenant.employees.index') }}" class="underline">Personel</a> sayfasından işaretleyin.</p>
+            <div class="grid gap-3 sm:grid-cols-3">
+                <x-input name="home_travel_minutes" label="Yol süresi (dk)" type="number" min="0" max="240" :value="$branch?->home_travel_minutes ?? 30" help="Randevunun önü ve arkası personelin takviminde kapatılır." />
+                <x-input name="home_min_total" label="En düşük hizmet tutarı (₺)" inputmode="decimal" :value="$branch?->home_min_total?->toDecimal()" help="Boş: sınır yok" />
+                <label class="flex items-start gap-2 pt-6 text-sm"><input type="hidden" name="home_requires_approval" value="0"><input type="checkbox" name="home_requires_approval" value="1" class="mt-1" @checked(old('home_requires_approval', $branch?->home_requires_approval ?? true))> <span>Adres randevuları onayımdan sonra kesinleşsin</span></label>
+            </div>
+            @php
+                $areas = $branch?->serviceAreas?->keyBy('district_id') ?? collect();
+                $cityId = old('city_id', $branch?->city_id);
+                $districts = $cityId ? ($cities->firstWhere('id', (int) $cityId)?->districts ?? collect()) : collect();
+                $districts = $districts->concat(\App\Models\District::whereIn('id', $areas->keys())->whereNotIn('id', $districts->pluck('id'))->get())->sortBy('name');
+            @endphp
+            <div>
+                <p class="label">Gidilen ilçeler ve ulaşım ücreti</p>
+                @if($districts->isEmpty())
+                    <p class="text-sm text-slate-500">Önce şubenin ilini seçip kaydedin; ardından ilçeler burada listelenir.</p>
+                @else
+                    <div class="grid gap-2 sm:grid-cols-2">
+                        @foreach($districts as $d)
+                            @php $a = $areas->get($d->id); @endphp
+                            <div class="flex items-center gap-2 rounded-lg bg-white p-2 ring-1 ring-slate-200">
+                                <label class="flex flex-1 items-center gap-2 text-sm"><input type="checkbox" name="area[{{ $d->id }}][on]" value="1" @checked(old("area.{$d->id}.on", (bool) $a))> {{ $d->name }}</label>
+                                <input name="area[{{ $d->id }}][fee]" value="{{ old("area.{$d->id}.fee", $a?->travel_fee?->toDecimal()) }}" inputmode="decimal" placeholder="0" class="input w-24 text-right" aria-label="{{ $d->name }} ulaşım ücreti (₺)">
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+                <div class="mt-2"><x-input name="extra_districts" label="Listede olmayan ilçe ekle (virgülle)" help="Şubenin ilindeki ilçeler; eklenince listede görünür, ücretini sonra girin." /></div>
+                @error('home_areas')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+            </div>
+        </div>
+    </fieldset>
     <button class="btn-primary">Kaydet</button>
 </form>
 @if($branch)

@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Public salon search. Only tenants that are active, opted in to public listing
  * and have a usable subscription are returned. Filters: city, district,
- * category/service text, price range, availability on a date (+ optional time).
+ * category/service text, price range, availability on a date (+ optional time),
+ * home visits ("home": salons that come to the chosen district).
  */
 final class SalonSearchService
 {
@@ -37,7 +38,26 @@ final class SalonSearchService
                     $b->whereIn('branches.district_id', DB::table('districts')->where('slug', $f['district'])->orWhere('id', (int) $f['district'])->select('id'));
                 }
             };
-            $q->whereExists($branchFilter);
+            if (! empty($f['home'])) {
+                // "Evime gelsin": a branch that serves the chosen district/city (it may be located elsewhere)
+                // and at least one service that can be done at the address.
+                $q->whereExists(fn ($b) => $b->from('branches')->whereColumn('branches.tenant_id', 'tenants.id')
+                    ->where('branches.status', RecordStatus::Active->value)->whereNull('branches.deleted_at')
+                    ->where('branches.home_service_enabled', true)
+                    ->whereExists(function ($a) use ($f) {
+                        $a->from('branch_service_areas')->whereColumn('branch_service_areas.branch_id', 'branches.id');
+                        if (! empty($f['district'])) {
+                            $a->whereIn('branch_service_areas.district_id', DB::table('districts')->where('slug', $f['district'])->orWhere('id', (int) $f['district'])->select('id'));
+                        } elseif (! empty($f['city'])) {
+                            $a->whereIn('branch_service_areas.district_id', DB::table('districts')
+                                ->whereIn('city_id', DB::table('cities')->where('slug', $f['city'])->orWhere('id', (int) $f['city'])->select('id'))->select('id'));
+                        }
+                    }))
+                    ->whereExists(fn ($s) => $s->from('services')->whereColumn('services.tenant_id', 'tenants.id')
+                        ->where('services.active', true)->where('services.home_available', true)->whereNull('services.deleted_at'));
+            } else {
+                $q->whereExists($branchFilter);
+            }
 
             if (! empty($f['category']) || ! empty($f['service']) || isset($f['min_price']) || isset($f['max_price'])) {
                 $q->whereExists(function ($s) use ($f) {
@@ -97,18 +117,21 @@ final class SalonSearchService
 
     private function hasAvailability(int $tenantId, array $f): bool
     {
-        $branches = Branch::withoutGlobalScopes()->with('tenant')->where('tenant_id', $tenantId)->where('status', RecordStatus::Active->value)->get();
+        $home = ! empty($f['home']);
+        $branches = Branch::withoutGlobalScopes()->with('tenant')->where('tenant_id', $tenantId)->where('status', RecordStatus::Active->value)
+            ->when($home, fn ($q) => $q->where('home_service_enabled', true))->get();
         foreach ($branches as $branch) {
             $serviceIds = DB::table('branch_services')->join('services', 'services.id', '=', 'branch_services.service_id')
                 ->where('branch_services.branch_id', $branch->id)->where('branch_services.active', true)
                 ->where('services.active', true)->whereNull('services.deleted_at')
                 ->when(! empty($f['category']), fn ($q) => $q->whereIn('services.category_id', DB::table('service_categories')->where('slug', $f['category'])->select('id')))
+                ->when($home, fn ($q) => $q->where('services.home_available', true))
                 ->orderBy('services.duration_minutes')->limit(1)->pluck('services.id')->all();
             if ($serviceIds === []) {
                 continue;
             }
             try {
-                $slots = $this->availability->slotsForDay($branch, $serviceIds, null, (string) $f['date']);
+                $slots = $this->availability->slotsForDay($branch, $serviceIds, null, (string) $f['date'], homeVisit: $home);
             } catch (\Throwable) {
                 continue;
             }

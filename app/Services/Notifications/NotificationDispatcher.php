@@ -8,6 +8,7 @@ use App\Enums\NotificationChannel;
 use App\Mail\AppointmentNotificationMail;
 use App\Models\ActionToken;
 use App\Models\Appointment;
+use App\Models\AppointmentAddress;
 use App\Models\AppointmentProposal;
 use App\Models\Branch;
 use App\Models\NotificationDelivery;
@@ -198,7 +199,8 @@ final class NotificationDispatcher
             }
         }
         if ($customer->email && $this->consents->preferenceAllows($customer, $category, NotificationChannel::Email)) {
-            $this->deliverEmail($a, $customer->email, $subject, TemplateCatalog::render($templateKey, $params), $link ?? $this->manageUrl($a), $templateKey, $dedupe ? 'mail:'.$dedupe : null, $linkLabel,
+            $body = TemplateCatalog::render($templateKey, $params).($ctx['home'] ? "\n\nHizmet adresinizde verilecek ({$ctx['home']})." : '');
+            $this->deliverEmail($a, $customer->email, $subject, $body, $link ?? $this->manageUrl($a), $templateKey, $dedupe ? 'mail:'.$dedupe : null, $linkLabel,
                 rebookUrl: route('booking-link', ['slug' => $ctx['tenant']->slug, 'k' => 'eposta']));
         }
 
@@ -226,7 +228,7 @@ final class NotificationDispatcher
         $this->panel($ctx, 'appointment_requested', 'Yeni randevu talebi', TemplateCatalog::render('salon_new_request', $params), 'salon_new_request:'.$a->id.':v'.$a->version);
         $link = $this->salonActionUrl($a);
         foreach ($this->staffEmails($ctx) as $email) {
-            $this->deliverEmail($a, $email, 'Yeni randevu talebi', TemplateCatalog::render('salon_new_request', $params), $link, 'salon_new_request', 'salon_req:'.$a->id.':'.$email, 'Talebi yönet');
+            $this->deliverEmail($a, $email, ($ctx['home'] ? '🏠 ' : '').'Yeni randevu talebi', TemplateCatalog::render('salon_new_request', $params).($ctx['home'] ? "\n\nAdrese hizmet: {$ctx['home']} (açık adres panelde)." : ''), $link, 'salon_new_request', 'salon_req:'.$a->id.':'.$email, 'Talebi yönet');
         }
         unset($sentWhatsApp);
     }
@@ -251,7 +253,7 @@ final class NotificationDispatcher
         }
         PanelNotification::withoutGlobalScopes()->create([
             'tenant_id' => $ctx['tenant']->id, 'branch_id' => $ctx['branch']->id, 'appointment_id' => $ctx['appointment']->id,
-            'event_type' => $event, 'title' => $title, 'body' => mb_substr($body, 0, 1000),
+            'event_type' => $event, 'title' => ($ctx['home'] ? '🏠 ' : '').$title, 'body' => mb_substr($body.($ctx['home'] ? "\nAdrese hizmet: {$ctx['home']}" : ''), 0, 1000),
         ]);
         if (! $dedupe) {
             $this->recordDelivery($ctx['appointment'], NotificationChannel::Panel, 'panel', $event, 'sent');
@@ -341,6 +343,10 @@ final class NotificationDispatcher
             'when' => LocalTime::format($a->starts_at_utc, $tz, 'd F l H:i'),
             'services' => $items->implode(', '),
             'ref' => $a->public_reference,
+            // Home visit: district only in messages; the street address is shown on the panel detail page.
+            'home' => $a->location_type === 'address'
+                ? AppointmentAddress::withoutGlobalScopes()->where('appointment_id', $a->id)->with('district.city')->first()?->shortLabel() ?? 'Adres'
+                : null,
         ];
     }
 

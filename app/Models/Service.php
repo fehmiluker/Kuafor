@@ -22,6 +22,7 @@ class Service extends Model
         return [
             'base_price' => MoneyCast::class,
             'active' => 'boolean',
+            'home_available' => 'boolean',
             'duration_minutes' => 'integer',
             'buffer_minutes' => 'integer',
         ];

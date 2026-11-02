@@ -93,7 +93,17 @@
                         <div class="flex justify-between py-0.5"><dt>{{ \App\Models\WorkingHour::DAY_NAMES[$dow] }}</dt><dd class="text-slate-600">{{ $h->isEmpty() ? 'Kapalı' : $h->map(fn($x) => substr($x->starts_local,0,5).'–'.substr($x->ends_local,0,5))->implode(', ') }}</dd></div>
                     @endforeach
                 </dl>
-                @unless($tenant->is_showcase)<a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id]) }}" class="btn-primary mt-4 w-full">Bu şubeden randevu al</a>@endunless
+                @php $homeAreas = app(\App\Services\Booking\HomeVisitRules::class)->offers($b) ? app(\App\Services\Booking\HomeVisitRules::class)->areas($b) : collect(); @endphp
+                @if($homeAreas->isNotEmpty())
+                    <div class="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">
+                        <p class="font-semibold">🏠 Adrese hizmet</p>
+                        <p class="mt-0.5 text-xs">Gidilen ilçeler: {{ $homeAreas->map(fn ($a) => $a->district?->name)->filter()->implode(', ') }}@if($b->home_min_total) · En düşük {{ $b->home_min_total->format() }}@endif</p>
+                    </div>
+                @endif
+                @unless($tenant->is_showcase)
+                    <a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id]) }}" class="btn-primary mt-4 w-full">Bu şubeden randevu al</a>
+                    @if($homeAreas->isNotEmpty())<a href="{{ route('salon.book', ['slug' => $tenant->slug, 'sube' => $b->id, 'yer' => 'adres']) }}" class="btn-secondary mt-2 w-full">🏠 Adresime randevu al</a>@endif
+                @endunless
             </section>
         @endforeach
         @if($employees->isNotEmpty())

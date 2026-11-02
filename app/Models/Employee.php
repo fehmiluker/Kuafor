@@ -19,7 +19,7 @@ class Employee extends Model
 
     protected function casts(): array
     {
-        return ['status' => RecordStatus::class, 'buffer_minutes' => 'integer'];
+        return ['status' => RecordStatus::class, 'buffer_minutes' => 'integer', 'home_service' => 'boolean'];
     }
 
     public function user(): BelongsTo

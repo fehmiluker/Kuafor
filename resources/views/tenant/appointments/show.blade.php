@@ -14,8 +14,21 @@
             <dl class="mt-4 grid grid-cols-3 gap-2 text-sm">
                 <dt class="text-slate-500">Tarih</dt><dd class="col-span-2 font-medium"><x-local-time :at="$a->starts_at_utc" :tz="$tz" format="d F Y l, H:i" /> – <x-local-time :at="$a->ends_at_utc" :tz="$tz" format="H:i" /></dd>
                 <dt class="text-slate-500">Şube / personel</dt><dd class="col-span-2">{{ $a->branch->name }} · {{ $a->employee?->display_name }}</dd>
+                @if($a->isHomeVisit())
+                    <dt class="text-slate-500">🏠 Adrese hizmet</dt>
+                    <dd class="col-span-2">
+                        @if($a->address?->address_line)
+                            <span class="font-medium">{{ $a->address->placeLabel() }}:</span> {{ $a->address->address_line }}@if($a->address->address_detail) ({{ $a->address->address_detail }})@endif,
+                            {{ $a->address->district?->name }}, {{ $a->address->district?->city?->name }}
+                            <a href="{{ $a->address->mapUrl() }}" target="_blank" rel="noopener" class="ml-1 text-brand-700 underline">Haritada aç ↗</a>
+                        @else
+                            {{ $a->address?->shortLabel() }} <span class="text-xs text-slate-500">(açık adres gizlilik gereği silindi)</span>
+                        @endif
+                        <span class="block text-xs text-slate-500">Yol süresi: {{ $a->travel_minutes }} dk gidiş + {{ $a->travel_minutes }} dk dönüş takvimde ayrıldı.</span>
+                    </dd>
+                @endif
                 <dt class="text-slate-500">Hizmetler</dt><dd class="col-span-2">@foreach($a->items as $i){{ $i->service_name_snapshot }} ({{ $i->duration_minutes_snapshot }} dk, {{ $i->unit_price_snapshot->format() }})@if(!$loop->last), @endif @endforeach</dd>
-                <dt class="text-slate-500">Tutar</dt><dd class="col-span-2">{{ $a->subtotal->format() }} @if(!$a->discount->isZero()) − {{ $a->discount->format() }} indirim = <strong>{{ $a->total_price->format() }}</strong>@endif</dd>
+                <dt class="text-slate-500">Tutar</dt><dd class="col-span-2">{{ $a->subtotal->format() }} @if(!$a->discount->isZero()) − {{ $a->discount->format() }} indirim @endif @if($a->travel_fee && ! $a->travel_fee->isZero()) + {{ $a->travel_fee->format() }} ulaşım @endif @if(!$a->discount->isZero() || ($a->travel_fee && ! $a->travel_fee->isZero())) = <strong>{{ $a->total_price->format() }}</strong>@endif</dd>
                 <dt class="text-slate-500">Kaynak</dt><dd class="col-span-2">{{ $a->source->value }} · {{ $a->approval_mode_snapshot->label() }}</dd>
                 @if($a->customer_note)<dt class="text-slate-500">Müşteri notu</dt><dd class="col-span-2">{{ $a->customer_note }}</dd>@endif
                 @if($a->pending_expires_at_utc)<dt class="text-slate-500">Yanıt süresi</dt><dd class="col-span-2 text-amber-700"><x-local-time :at="$a->pending_expires_at_utc" :tz="$tz" format="d M H:i" /> tarihine kadar</dd>@endif

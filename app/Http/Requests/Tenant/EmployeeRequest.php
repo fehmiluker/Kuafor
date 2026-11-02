@@ -27,6 +27,7 @@ class EmployeeRequest extends ApiFormRequest
             'bio' => ['nullable', 'string', 'max:1000'],
             'status' => ['sometimes', Rule::in(['active', 'inactive'])],
             'buffer_minutes' => ['nullable', 'integer', 'between:0,120'],
+            'home_service' => ['sometimes', 'boolean'],
             'branch_ids' => [$req, 'array', 'min:1', new BelongsToCurrentTenant('branches')],
             'service_ids' => ['sometimes', 'array', new BelongsToCurrentTenant('services')],
             'user_email' => ['nullable', 'email:rfc'],

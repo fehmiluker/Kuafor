@@ -31,12 +31,12 @@ final class AvailabilityService
      * @param  list<int>  $serviceIds
      * @return list<array{start: CarbonImmutable, end: CarbonImmutable, employee_ids: list<int>}>
      */
-    public function slotsForDay(Branch $branch, array $serviceIds, ?int $employeeId, string $localDate, bool $enforceNotice = true, ?Exclusions $ex = null): array
+    public function slotsForDay(Branch $branch, array $serviceIds, ?int $employeeId, string $localDate, bool $enforceNotice = true, ?Exclusions $ex = null, bool $homeVisit = false): array
     {
         $ex ??= Exclusions::none();
         $settings = BookingSettings::for($branch->tenant, $branch);
         $services = $this->resolver->servicesForBranch($branch, $serviceIds);
-        $employees = $this->resolver->qualifiedEmployees($branch, $services->keys()->all(), $employeeId);
+        $employees = $this->resolver->qualifiedEmployees($branch, $services->keys()->all(), $employeeId, $homeVisit);
 
         if (! $this->dateWithinHorizon($branch, $localDate, $settings, $enforceNotice)) {
             return [];
@@ -45,6 +45,9 @@ final class AvailabilityService
         $bySlot = [];
         foreach ($employees as $employee) {
             $quote = $this->resolver->quote($branch, $employee, $services);
+            if ($homeVisit) {
+                $quote = $quote->withTravel((int) $branch->home_travel_minutes);
+            }
             $day = $this->loadDay($branch, $employee, $localDate, $ex);
             foreach ($day['windows'] as $window) {
                 $t = $window->start;
@@ -83,7 +86,8 @@ final class AvailabilityService
     private function evaluate(array $day, Quote $quote, CarbonImmutable $start, BookingSettings $settings, bool $enforceNotice): ?string
     {
         $serviceEnd = $start->addMinutes($quote->durationMinutes());
-        $blockedEnd = $serviceEnd->addMinutes($quote->bufferMinutes());
+        $blockedEnd = $serviceEnd->addMinutes($quote->blockedAfterMinutes());
+        $blockedStart = $start->subMinutes($quote->travelMinutes); // home visit: travel there
 
         if ($enforceNotice && $start->lt(now()->utc()->addMinutes($settings->minNoticeMinutes))) {
             return 'too_soon';
@@ -107,7 +111,7 @@ final class AvailabilityService
             }
         }
         foreach ($day['blockers'] as $b) {
-            if ($b->overlaps($start, $blockedEnd)) {
+            if ($b->overlaps($blockedStart, $blockedEnd)) {
                 return $b->kind;
             }
         }
@@ -176,9 +180,10 @@ final class AvailabilityService
             ->whereIn('status', AppointmentStatus::blocking())
             ->where('starts_at_utc', '<', $to)->where('blocked_until_utc', '>', $from)
             ->when($ex->appointmentId, fn ($q) => $q->where('id', '!=', $ex->appointmentId))
-            ->get(['starts_at_utc', 'blocked_until_utc']);
+            ->get(['starts_at_utc', 'blocked_until_utc', 'travel_minutes']);
         foreach ($appointments as $a) {
-            $blockers[] = new Interval(CarbonImmutable::parse($a->starts_at_utc, 'UTC'), CarbonImmutable::parse($a->blocked_until_utc, 'UTC'), 'booked');
+            // Home visits also block the travel time before the start (travel back is inside blocked_until).
+            $blockers[] = new Interval(CarbonImmutable::parse($a->starts_at_utc, 'UTC')->subMinutes((int) $a->travel_minutes), CarbonImmutable::parse($a->blocked_until_utc, 'UTC'), 'booked');
         }
         $holds = DB::table('booking_holds')->where('employee_id', $employee->id)
             ->where('status', HoldStatus::Held->value)->where('expires_at_utc', '>', now()->utc())

@@ -21,6 +21,7 @@ use App\Rules\Phone;
 use App\Services\Audit\AuditLogger;
 use App\Services\Billing\EntitlementService;
 use App\Services\Catalog\TenantCatalogService;
+use App\Services\Onboarding\SalonOnboardingService;
 use App\Services\Settings\SettingsRepository;
 use App\Services\WhatsApp\ConnectionService;
 use App\Support\LocalTime;
@@ -51,7 +52,7 @@ class PanelCatalogController extends PanelBaseController
         $settings ??= app(SettingsRepository::class);
 
         return view('tenant.branches.form', [
-            'branch' => $branch?->load('workingHours'),
+            'branch' => $branch?->load(['workingHours', 'serviceAreas']),
             'cities' => City::with('districts')->orderBy('name')->get(),
             'managerNumbers' => $branch ? (array) ($settings->branch($branch)['whatsapp_manager_numbers'] ?? []) : [],
             'blocked' => $branch ? BlockedTime::where('branch_id', $branch->id)->where('ends_at_utc', '>', now())->orderBy('starts_at_utc')->get() : collect(),
@@ -71,6 +72,28 @@ class PanelCatalogController extends PanelBaseController
                 if (! PhoneNumber::isValid($n)) {
                     return back()->withInput()->withErrors(['manager_numbers' => "Geçersiz numara: {$n}"]);
                 }
+            }
+        }
+        if ($request->has('home_form')) {
+            $data['home_service_enabled'] = $request->boolean('home_service_enabled');
+            $data['home_requires_approval'] = $request->boolean('home_requires_approval');
+            $areas = collect($request->input('area', []))->filter(fn ($a) => ! empty($a['on']))
+                ->map(fn ($a, $districtId) => ['district_id' => (int) $districtId, 'fee' => $a['fee'] ?? null])->values();
+            // Districts missing from the list (e.g. smaller cities) can be typed in; they are added to the city.
+            $cityId = (int) ($data['city_id'] ?? $branch?->city_id);
+            foreach (array_filter(array_map('trim', explode(',', (string) $request->input('extra_districts')))) as $name) {
+                if ($cityId && ($id = SalonOnboardingService::resolveDistrict($cityId, $name))) {
+                    $areas->push(['district_id' => $id, 'fee' => null]);
+                }
+            }
+            foreach ($areas as $a) {
+                if ($a['fee'] !== null && $a['fee'] !== '' && ! preg_match('/^\d{1,10}([.,]\d{1,2})?$/', (string) $a['fee'])) {
+                    return back()->withInput()->withErrors(['home_areas' => 'Ulaşım ücreti geçersiz: '.$a['fee']]);
+                }
+            }
+            $data['home_areas'] = $areas->unique('district_id')->values()->all();
+            if ($data['home_service_enabled'] && $data['home_areas'] === []) {
+                return back()->withInput()->withErrors(['home_areas' => 'Adrese hizmet için en az bir ilçe seçin.']);
             }
         }
         $saved = $this->catalog->saveBranch($branch, $data);
@@ -203,6 +226,7 @@ class PanelCatalogController extends PanelBaseController
         if (! $request->boolean('custom_shifts')) {
             $data['shifts'] = [];
         }
+        $data['home_service'] = $request->boolean('home_service');
         $saved = $this->catalog->saveEmployee($employee, $data);
 
         return redirect()->route('tenant.employees.edit', $saved)->with('status', 'Personel kaydedildi.');
@@ -256,6 +280,7 @@ class PanelCatalogController extends PanelBaseController
         $service ? $this->authorize('update', $service) : $this->authorize('create', Service::class);
         $data = $request->validated();
         $data['active'] = $request->boolean('active');
+        $data['home_available'] = $request->boolean('home_available');
         $data['branch_ids'] = $data['branch_ids'] ?? [];
         $saved = $this->catalog->saveService($service, $data);
 

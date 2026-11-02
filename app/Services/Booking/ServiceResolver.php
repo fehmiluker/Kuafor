@@ -54,7 +54,7 @@ final class ServiceResolver
      * @param  list<int>  $serviceIds
      * @return Collection<int, Employee>
      */
-    public function qualifiedEmployees(Branch $branch, array $serviceIds, ?int $onlyEmployeeId = null): Collection
+    public function qualifiedEmployees(Branch $branch, array $serviceIds, ?int $onlyEmployeeId = null, bool $homeOnly = false): Collection
     {
         $q = Employee::withoutGlobalScopes()
             ->where('employees.tenant_id', $branch->tenant_id)
@@ -66,6 +66,9 @@ final class ServiceResolver
                 ->where('employee_branches.active', true));
         if ($onlyEmployeeId !== null) {
             $q->where('employees.id', $onlyEmployeeId);
+        }
+        if ($homeOnly) {
+            $q->where('employees.home_service', true);
         }
         foreach (array_unique($serviceIds) as $sid) {
             $q->whereExists(fn ($s) => $s->from('employee_services')
