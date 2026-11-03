@@ -8,7 +8,7 @@ Betik şunları kurar ve ayarlar: Nginx, PHP 8.4 (FPM), MySQL 8, Composer, kuyru
 
 ## 1. Sunucuyu hazırlayın (hPanel)
 1. **hPanel > VPS > İşletim Sistemi**: **Ubuntu 24.04** (eklentisiz, "Plain OS") seçin. Panelli şablonlar (CyberPanel, CloudPanel, Coolify…) yerine düz Ubuntu kullanın; betik her şeyi kendisi kurar.
-   > Sunucuda başka bir site/uygulama varsa betiği **çalıştırmayın**: varsayılan Nginx sitesini değiştirir.
+   > Sunucuda başka bir site/uygulama varsa: 80/443'ü bir **Traefik** konteyneri kullanıyorsa (ör. Hostinger **n8n** şablonu) betik bunu algılar ve Kuaför'ü Traefik arkasına kurar (aşağıda "Traefik/n8n olan sunucu"). 80 portu başka bir şeydeyse betik hiçbir şeyi değiştirmeden durur.
 2. **Root şifresi** belirleyin ve sunucunun **IP adresini** not edin.
 3. **Alan adı (önerilir):** Alan adınızın DNS ayarlarında bir **A kaydı** ekleyin, ör. `demo.alanadiniz.com → VPS IP`. Yayılması birkaç dakika sürebilir. Alan adı olmadan da kurulur (IP ile, HTTPS'siz).
 
@@ -33,6 +33,18 @@ DOMAIN=demo.alanadiniz.com EMAIL=siz@eposta.com DEMO_PASS='Guclu-Bir-Sifre' bash
 Kurulum 5–10 dakika sürer. Sonunda adres ve bir kontrol raporu (`kuafor:check --demo`) görünür. Veritabanı şifresi `/root/kuafor-kurulum-bilgileri.txt` dosyasına yazılır.
 
 > Alan adı yoksa: `DEMO_PASS='Guclu-Bir-Sifre' bash install.sh`
+
+### Traefik/n8n olan sunucu (PROXY=traefik)
+80/443'ü Docker içindeki Traefik kullanıyorsa (Hostinger n8n şablonu) betik otomatik olarak bu modda çalışır; isterseniz `PROXY=traefik` ile zorlayabilirsiniz. `DOMAIN` zorunludur (n8n'den farklı bir alt alan adı, ör. `kuafor.alanadiniz.com`, A kaydı bu sunucuya).
+
+- Nginx yalnızca `8081` portunda ve yalnızca sunucu içinden (Docker ağları) erişilebilir dinler; dışarıdan giriş Traefik üzerinden (https) olur.
+- 80/443, güvenlik duvarı (ufw) ve certbot'a **dokunulmaz**; n8n ve diğer uygulamalar yeniden başlatılmaz.
+- Traefik'in izlediği kural klasörüne (n8n şablonunda `/docker/n8n/traefik-config`) `kuafor.yml` yazılır; sertifikayı Traefik alır. Kaldırmak için bu dosyayı silin.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fehmiluker/Kuafor/main/deploy/vps/install.sh -o install.sh
+DOMAIN=kuafor.alanadiniz.com DEMO_PASS='Guclu-Bir-Sifre' bash install.sh
+```
 
 ## 4. Yönetici hesabı
 ```bash

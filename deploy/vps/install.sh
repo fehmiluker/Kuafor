@@ -10,6 +10,11 @@
 #   EMAIL      Let's Encrypt (HTTPS) için e-posta. DOMAIN ile birlikte verilirse sertifika alınır.
 #   DEMO_PASS  Siteyi şifreyle korur (kullanıcı adı: DEMO_USER, varsayılan "demo"). Önerilir: demo şifreleri README'de açık.
 #   BRANCH     GitHub dalı (varsayılan main).
+#   PROXY      "traefik": sunucuda 80/443'ü zaten bir Traefik (Docker; ör. Hostinger n8n şablonu) kullanıyorsa.
+#              Nginx yalnızca WEB_PORT'ta (varsayılan 8081) ve yalnızca sunucu içinden dinler; 80/443, güvenlik
+#              duvarı ve certbot'a dokunulmaz; Traefik'in izlediği klasöre bir yönlendirme kuralı yazılır ve
+#              sertifikayı Traefik alır. Diğer konteynerler yeniden başlatılmaz. 80 portu bir Traefik
+#              konteynerinde ise otomatik seçilir. DOMAIN zorunludur.
 #
 # Gerçek WhatsApp/ödeme/e-posta KAPALIDIR (.env.demo.example). Tekrar çalıştırmak güvenlidir:
 # mevcut kurulumda kod ve veritabanı korunur, yalnızca eksik adımlar tamamlanır.
@@ -22,6 +27,9 @@ DOMAIN="${DOMAIN:-}"
 EMAIL="${EMAIL:-}"
 DEMO_USER="${DEMO_USER:-demo}"
 DEMO_PASS="${DEMO_PASS:-}"
+PROXY="${PROXY:-}"
+WEB_PORT="${WEB_PORT:-8081}"
+TRAEFIK_CONTAINER="${TRAEFIK_CONTAINER:-}"
 PHP_VER=8.4
 DB_NAME=kuafor
 DB_USER=kuafor
@@ -37,11 +45,50 @@ as_web() { sudo -u www-data -H env COMPOSER_HOME=/var/www/.composer "$@"; }
 [ "${ID:-}" = "ubuntu" ] || die "Bu betik Ubuntu 22.04/24.04 içindir (bulunan: ${PRETTY_NAME:-?})."
 export DEBIAN_FRONTEND=noninteractive
 
+# --------------------------------------------------------------------- mevcut sunucu (80 portu dolu mu?)
+port80_owner() { ss -Hltnp 'sport = :80' 2>/dev/null | grep -o 'users:(("[^"]*' | head -1 | sed 's/.*"//'; }
+OWNER80="$(port80_owner)"
+if [ -z "$PROXY" ] && [ -n "$OWNER80" ] && [ "$OWNER80" != "nginx" ]; then
+  if command -v docker >/dev/null 2>&1 && docker ps --format '{{.Image}}' | grep -qi traefik; then
+    PROXY=traefik
+    echo "80 portu bir Traefik konteynerinde: Traefik arkasında kurulacak (PROXY=traefik)."
+  else
+    die "80 portu başka bir uygulamada (${OWNER80}). Bu sunucuya otomatik kurulum yapılmadı; docs/vps-kurulum.md'ye bakın."
+  fi
+fi
+if [ "$PROXY" = traefik ]; then
+  [ -n "$DOMAIN" ] || die "PROXY=traefik için DOMAIN gerekli (ör. DOMAIN=kuafor.alanadiniz.com)."
+  command -v docker >/dev/null 2>&1 || die "PROXY=traefik ama docker bulunamadı."
+  [ -n "$TRAEFIK_CONTAINER" ] || TRAEFIK_CONTAINER="$(docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($2) ~ /traefik/ {print $1; exit}')"
+  [ -n "$TRAEFIK_CONTAINER" ] || die "Çalışan Traefik konteyneri bulunamadı (TRAEFIK_CONTAINER=... verin)."
+  T_ARGS="$(docker inspect "$TRAEFIK_CONTAINER" --format '{{join .Args " "}} {{join .Config.Cmd " "}}')"
+  T_DYN_IN="$(printf '%s' "$T_ARGS" | grep -o -- '--providers.file.directory=[^ ]*' | head -1 | cut -d= -f2)"
+  [ -n "$T_DYN_IN" ] || die "Traefik'te dosya sağlayıcısı (--providers.file.directory) yok; yönlendirme kuralı eklenemiyor."
+  printf '%s' "$T_ARGS" | grep -q -- '--providers.file.watch=true' || echo "UYARI: Traefik dosya değişikliklerini izlemiyor; kural için Traefik'i yeniden başlatmanız gerekebilir."
+  T_DYN="$(docker inspect "$TRAEFIK_CONTAINER" --format "{{range .Mounts}}{{if eq .Destination \"${T_DYN_IN}\"}}{{.Source}}{{end}}{{end}}")"
+  [ -n "$T_DYN" ] && [ -d "$T_DYN" ] || die "Traefik kural klasörünün sunucudaki karşılığı bulunamadı (${T_DYN_IN})."
+  T_RESOLVER="$(printf '%s' "$T_ARGS" | grep -o -- '--certificatesresolvers\.[^.]*\.acme' | head -1 | cut -d. -f2)"
+  T_ENTRY="$(printf '%s' "$T_ARGS" | grep -o -- '--entrypoints\.[^.]*\.address=:443' | head -1 | cut -d. -f2)"
+  T_GATEWAY="$(docker inspect "$TRAEFIK_CONTAINER" --format '{{range .NetworkSettings.Networks}}{{.Gateway}} {{end}}' | awk '{print $1}')"
+  [ -n "$T_GATEWAY" ] || die "Traefik konteynerinin ağ geçidi bulunamadı."
+  echo "Traefik: ${TRAEFIK_CONTAINER} · kural klasörü ${T_DYN} · giriş ${T_ENTRY:-websecure} · sertifika ${T_RESOLVER:-yok} · hedef http://${T_GATEWAY}:${WEB_PORT}"
+fi
+
 # --------------------------------------------------------------------- paketler
 say "Sistem paketleri"
 apt-get update -qq
-apt-get install -y -qq software-properties-common ca-certificates curl git unzip gnupg openssl \
-  nginx mysql-server supervisor certbot python3-certbot-nginx apache2-utils ufw >/dev/null
+if [ "$PROXY" = traefik ]; then
+  # Port 80 is taken: keep apt from auto-starting nginx with its default site (it would fail and abort the install).
+  printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d && chmod +x /usr/sbin/policy-rc.d
+  trap 'rm -f /usr/sbin/policy-rc.d' EXIT
+  apt-get install -y -qq software-properties-common ca-certificates curl git unzip gnupg openssl \
+    nginx mysql-server supervisor apache2-utils >/dev/null
+  rm -f /usr/sbin/policy-rc.d /etc/nginx/sites-enabled/default
+  svc start mysql || true
+else
+  apt-get install -y -qq software-properties-common ca-certificates curl git unzip gnupg openssl \
+    nginx mysql-server supervisor certbot python3-certbot-nginx apache2-utils ufw >/dev/null
+fi
 
 has_pkg() { apt-cache show "$1" >/dev/null 2>&1; }
 add_php_ppa() {
@@ -126,7 +173,10 @@ cd "$APP_DIR"
 [ -f public/build/manifest.json ] || die "public/build eksik (derlenmiş CSS/JS depoda olmalı)."
 
 # --------------------------------------------------------------------- .env
-if [ -n "$DOMAIN" ]; then
+if [ "$PROXY" = traefik ]; then
+  SCHEME=https   # Traefik terminates TLS
+  HOST="$DOMAIN"
+elif [ -n "$DOMAIN" ]; then
   if [ -n "$EMAIL" ]; then SCHEME=https; else SCHEME=http; fi
   HOST="$DOMAIN"
 else
@@ -148,6 +198,8 @@ if [ ! -f .env ]; then
     .env
   # Without HTTPS the browser would drop a "secure" session cookie and login would fail.
   [ "$SCHEME" = https ] || sed -i 's#^SESSION_SECURE_COOKIE=.*#SESSION_SECURE_COOKIE=false#' .env
+  # Behind Traefik (Docker network): trust its X-Forwarded-* headers so URLs and cookies are https.
+  [ "$PROXY" = traefik ] && sed -i 's#^TRUSTED_PROXIES=.*#TRUSTED_PROXIES=127.0.0.1,172.16.0.0/12,10.0.0.0/8,192.168.0.0/16#' .env
   chown www-data:www-data .env
 fi
 chmod 640 .env
@@ -170,7 +222,15 @@ as_web php artisan optimize >/dev/null
 say "Nginx"
 AUTH=""
 LISTEN6=""
-[ -e /proc/net/if_inet6 ] && LISTEN6="listen [::]:80 default_server;"
+LISTEN="listen 80 default_server;"
+ONLY_LOCAL=""
+if [ "$PROXY" = traefik ]; then
+  LISTEN="listen ${WEB_PORT};"
+  # Only Traefik (Docker networks) and the server itself may reach this port; the public enters via Traefik (https).
+  ONLY_LOCAL="allow 127.0.0.1; allow 172.16.0.0/12; allow 10.0.0.0/8; allow 192.168.0.0/16; deny all;"
+else
+  [ -e /proc/net/if_inet6 ] && LISTEN6="listen [::]:80 default_server;"
+fi
 if [ -n "$DEMO_PASS" ]; then
   htpasswd -bc /etc/nginx/kuafor.htpasswd "$DEMO_USER" "$DEMO_PASS" >/dev/null 2>&1
   chown root:www-data /etc/nginx/kuafor.htpasswd && chmod 640 /etc/nginx/kuafor.htpasswd
@@ -178,9 +238,10 @@ if [ -n "$DEMO_PASS" ]; then
 fi
 cat > /etc/nginx/sites-available/kuafor.conf <<NGINX
 server {
-    listen 80 default_server;
+    ${LISTEN}
     ${LISTEN6}
     server_name ${DOMAIN:-_};
+    ${ONLY_LOCAL}
     root ${APP_DIR}/public;   # document root = public/ only
     index index.php;
     client_max_body_size 8m;
@@ -238,7 +299,34 @@ supervisorctl restart 'kuafor-worker:*' >/dev/null 2>&1 || true
 echo "* * * * * www-data cd ${APP_DIR} && php artisan schedule:run >> /dev/null 2>&1" > /etc/cron.d/kuafor
 chmod 644 /etc/cron.d/kuafor
 
+# --------------------------------------------------------------------- Traefik yönlendirmesi
+if [ "$PROXY" = traefik ]; then
+  say "Traefik yönlendirmesi: https://${DOMAIN} -> Kuaför (${T_GATEWAY}:${WEB_PORT})"
+  cat > "${T_DYN}/kuafor.yml" <<TRAEFIK
+# Kuaför Randevu (deploy/vps/install.sh PROXY=traefik). Silinirse site Traefik'ten kalkar.
+http:
+  routers:
+    kuafor:
+      rule: "Host(\`${DOMAIN}\`)"
+      entryPoints: ["${T_ENTRY:-websecure}"]
+      service: kuafor
+      tls:
+$( [ -n "$T_RESOLVER" ] && echo "        certResolver: ${T_RESOLVER}" || echo "        {}" )
+  services:
+    kuafor:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://${T_GATEWAY}:${WEB_PORT}"
+TRAEFIK
+  chmod 644 "${T_DYN}/kuafor.yml"
+  sleep 5
+  if curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:${WEB_PORT}/up"; then echo "Nginx ${WEB_PORT}: çalışıyor."; else echo "UYARI: http://127.0.0.1:${WEB_PORT}/up yanıt vermedi."; fi
+  echo "Sertifika ilk ziyarette Traefik tarafından alınır (DNS A kaydı ${DOMAIN} -> bu sunucu olmalı); 1-2 dakika sürebilir."
+fi
+
 # --------------------------------------------------------------------- güvenlik duvarı + HTTPS
+if [ "$PROXY" != traefik ]; then
 say "Güvenlik duvarı (SSH, HTTP, HTTPS)"
 # SSH first, so enabling the firewall can never lock you out.
 if ufw app info OpenSSH >/dev/null 2>&1; then SSH_RULE=OpenSSH; else SSH_RULE=22/tcp; fi
@@ -259,6 +347,7 @@ if [ -n "$DOMAIN" ] && [ -n "$EMAIL" ]; then
     APP_URL="http://${DOMAIN}"
   fi
 fi
+fi  # PROXY != traefik
 
 # --------------------------------------------------------------------- özet
 {

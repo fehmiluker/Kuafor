@@ -2,7 +2,7 @@
 # VPS kurulumunu GitHub'daki daldan günceller (root olarak):  bash /var/www/kuafor/deploy/vps/update.sh
 set -euo pipefail
 APP_DIR="${APP_DIR:-/var/www/kuafor}"
-BRANCH="${BRANCH:-main}"
+BRANCH="${BRANCH:-$(git -C "$APP_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)}"  # stay on the installed branch
 as_web() { sudo -u www-data -H env COMPOSER_HOME=/var/www/.composer "$@"; }
 
 [ "$(id -u)" -eq 0 ] || { echo "root olarak çalıştırın (sudo -i)."; exit 1; }
