@@ -77,6 +77,7 @@ class AdminOnboardingController extends Controller
         if (! empty($d['category'])) {
             $services = array_map(fn ($s) => array_replace($s, ['category' => $d['category']]), $services);
         }
+        $d['owner_phone'] ??= null;
         $d['services'] = $services;
         $d['employees'] = array_values(array_filter(array_map(fn ($n) => Str::limit(trim($n), 60, ''), preg_split('/[|\r\n]+/', (string) ($d['employees'] ?? '')) ?: [])));
         ['tenant' => $tenant, 'user' => $user] = DB::transaction(function () use ($d, $onboarding, $profiles) {
