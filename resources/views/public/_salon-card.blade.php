@@ -14,14 +14,16 @@
         @else
             <span class="absolute inset-0 grid place-items-center text-brand-300"><x-icon name="store" class="h-10 w-10" /></span>
         @endif
+        @unless($salon->is_showcase)
         <span class="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-900 shadow-sm">
             @if($salon->rating_count)
                 <span class="text-amber-500">★</span>{{ number_format((float) $salon->rating_avg, 1, ',', '') }}
-                <span class="font-medium text-slate-500">{{ $salon->is_showcase ? '· Örnek işletme' : '('.$salon->rating_count.')' }}</span>
+                <span class="font-medium text-slate-500">{{ '('.$salon->rating_count.')' }}</span>
             @else
-                {{ $salon->is_showcase ? 'Örnek işletme' : 'Yeni' }}
+                Yeni
             @endif
         </span>
+        @endunless
     </a>
     @if($salon->is_showcase)
     @elseauth
