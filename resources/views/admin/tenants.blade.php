@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'İşletmeler')
 @section('content')
+<a class="btn-primary mb-4" href="{{ route('admin.tenants.create') }}">İşletme Ekle</a>
 <form method="GET" class="mb-4 flex gap-2"><input name="q" value="{{ $q }}" class="input max-w-sm" placeholder="İşletme ara" aria-label="Ara">
     <select name="durum" class="input max-w-48" aria-label="Durum"><option value="">Tümü</option>@foreach(\App\Enums\TenantStatus::cases() as $s)<option value="{{ $s->value }}" @selected(request('durum') === $s->value)>{{ $s->label() }}</option>@endforeach</select><button class="btn-secondary">Ara</button></form>
 <div class="table-wrap"><table class="table">

@@ -61,6 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->throttleApi('api');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['current_password', 'password', 'password_confirmation', 'merchant_key', 'merchant_salt']);
         $exceptions->dontReport([BookingConflictException::class, DomainRuleException::class, InvalidTransitionException::class, PlanLimitException::class]);
 
         $isApi = fn (Request $r) => $r->is('api/*') || $r->expectsJson();
