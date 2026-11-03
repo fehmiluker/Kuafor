@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 class AdminContentController extends Controller
 {
     public const KINDS = ['banner' => 'Bannerlar', 'popular' => 'Popüler Hizmetler'];
+
     public const ICONS = ['scissors' => 'Makas', 'razor' => 'Berber', 'face' => 'Güzellik', 'polish' => 'Tırnak', 'lotus' => 'Masaj', 'brush' => 'Fırça', 'star' => 'Yıldız', 'store' => 'İşletme'];
 
     private function need(Request $request): void
@@ -26,6 +27,7 @@ class AdminContentController extends Controller
     {
         $this->need($request);
         abort_unless(isset(self::KINDS[$kind]), 404);
+
         return view('admin.content.index', ['kind' => $kind, 'title' => self::KINDS[$kind], 'items' => HomeContent::where('kind', $kind)->orderBy('sort_order')->orderBy('id')->get()]);
     }
 
@@ -33,6 +35,7 @@ class AdminContentController extends Controller
     {
         $this->need($request);
         abort_unless(isset(self::KINDS[$kind]) && (! $item || $item->kind === $kind), 404);
+
         return view('admin.content.form', ['kind' => $kind, 'title' => self::KINDS[$kind], 'item' => $item, 'categories' => ServiceCategory::whereNull('tenant_id')->where('status', 'active')->orderBy('sort_order')->get()]);
     }
 
@@ -45,7 +48,9 @@ class AdminContentController extends Controller
             'button_text' => ['nullable', 'string', 'max:80'], 'target_url' => ['nullable', 'string', 'max:500', function ($attribute, $value, $fail) {
                 $relative = str_starts_with($value, '/') && ! str_starts_with($value, '//');
                 $external = filter_var($value, FILTER_VALIDATE_URL) && in_array(strtolower((string) parse_url($value, PHP_URL_SCHEME)), ['http', 'https'], true);
-                if ((! $relative && ! $external) || str_contains($value, chr(92)) || preg_match('/[\x00-\x20]/', $value)) { $fail('Geçerli bir http/https veya site içi bağlantı girin.'); }
+                if ((! $relative && ! $external) || str_contains($value, chr(92)) || preg_match('/[\x00-\x20]/', $value)) {
+                    $fail('Geçerli bir http/https veya site içi bağlantı girin.');
+                }
             }],
             'category_id' => ['nullable', Rule::exists('service_categories', 'id')->whereNull('tenant_id')->where('status', 'active')],
             'sort_order' => ['required', 'integer', 'between:0,65535'], 'active' => ['nullable', 'boolean'],
@@ -62,10 +67,14 @@ class AdminContentController extends Controller
                 $item->{$column} = $images->storeImage($request->file($field), 'home');
             }
         }
-        if ($request->boolean('remove_mobile')) { $old[] = $item->image_mobile_path; $item->image_mobile_path = null; }
+        if ($request->boolean('remove_mobile')) {
+            $old[] = $item->image_mobile_path;
+            $item->image_mobile_path = null;
+        }
         $item->save();
         Storage::disk('public')->delete(array_filter($old));
         app(AuditLogger::class)->log('admin.home_content_saved', $item, [], ['kind' => $kind, 'title' => $item->title]);
+
         return redirect()->route('admin.content.index', $kind)->with('status', 'İçerik kaydedildi.');
     }
 
@@ -77,12 +86,14 @@ class AdminContentController extends Controller
         app(AuditLogger::class)->log('admin.home_content_deleted', $item, [], ['kind' => $kind]);
         $item->delete();
         Storage::disk('public')->delete($paths);
+
         return back()->with('status', 'İçerik silindi.');
     }
 
     public function categories(Request $request)
     {
         $this->need($request);
+
         return view('admin.categories', ['categories' => ServiceCategory::whereNull('tenant_id')->orderBy('sort_order')->orderBy('id')->get(), 'icons' => self::ICONS]);
     }
 
@@ -102,12 +113,23 @@ class AdminContentController extends Controller
         $category->fill(collect($d)->except('image')->all());
         $category->show_on_home = $request->boolean('show_on_home');
         $old = null;
-        if ($request->hasFile('image')) { $old = $category->image_path; $category->image_path = $images->storeImage($request->file('image'), 'categories'); }
-        if ($request->boolean('remove_image')) { $old = $category->image_path; $category->image_path = null; }
+        if ($request->hasFile('image')) {
+            $old = $category->image_path;
+            $category->image_path = $images->storeImage($request->file('image'), 'categories');
+        }
+        if ($request->boolean('remove_image')) {
+            $old = $category->image_path;
+            $category->image_path = null;
+        }
         $category->save();
-        if ($oldSlug && $oldSlug !== $category->slug) { DB::table('home_contents')->where('target_url', '/salonlar?kategori='.$oldSlug)->update(['target_url' => '/salonlar?kategori='.$category->slug]); }
-        if ($old) { Storage::disk('public')->delete($old); }
+        if ($oldSlug && $oldSlug !== $category->slug) {
+            DB::table('home_contents')->where('target_url', '/salonlar?kategori='.$oldSlug)->update(['target_url' => '/salonlar?kategori='.$category->slug]);
+        }
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
         app(AuditLogger::class)->log('admin.category_saved', $category, [], ['slug' => $category->slug]);
+
         return back()->with('status', 'Kategori kaydedildi.');
     }
 
@@ -125,7 +147,10 @@ class AdminContentController extends Controller
             app(AuditLogger::class)->log('admin.category_deleted', $category, [], ['replacement_id' => $d['replacement_id'] ?? null]);
             $category->delete();
         });
-        if ($category->image_path) { Storage::disk('public')->delete($category->image_path); }
+        if ($category->image_path) {
+            Storage::disk('public')->delete($category->image_path);
+        }
+
         return back()->with('status', 'Kategori silindi.');
     }
 }

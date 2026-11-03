@@ -16,6 +16,7 @@ class HomeContent extends Model
     public function imageUrl(bool $mobile = false): string
     {
         $path = $mobile ? ($this->image_mobile_path ?: $this->image_path) : $this->image_path;
+
         return $path ? asset('storage/'.$path) : asset($this->asset_path ?: 'images/home/hero.jpg');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\QueueHeartbeat;
 use App\Services\Auth\WhatsAppOtpSender;
 use App\Services\Billing\PaymentGatewayInterface;
+use App\Services\Billing\PaymentSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -123,7 +124,7 @@ class DeploymentCheck extends Command
         $this->section('Dış servisler (demo güvenliği)');
         $waMode = config('whatsapp.mode');
         $realWhatsApp = $waMode === 'meta';
-        $paymentSettings = app(\App\Services\Billing\PaymentSettings::class);
+        $paymentSettings = app(PaymentSettings::class);
         $paytr = $paymentSettings->paytr();
         $paymentProvider = $paymentSettings->provider();
         $realPayment = $paymentProvider !== 'manual' || app(PaymentGatewayInterface::class)->supportsAutomaticCharging() || filled(config('subscriptions.webhook_secret'));

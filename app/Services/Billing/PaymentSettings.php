@@ -18,8 +18,11 @@ final class PaymentSettings
         $s = $this->settings->platform();
         $config = (array) config('subscriptions.paytr');
         foreach (['merchant_id', 'merchant_key', 'merchant_salt', 'test_mode'] as $key) {
-            if (array_key_exists('paytr_'.$key, $s)) { $config[$key] = $s['paytr_'.$key]; }
+            if (array_key_exists('paytr_'.$key, $s)) {
+                $config[$key] = $s['paytr_'.$key];
+            }
         }
+
         return $config;
     }
 }

@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\HomeContent;
 use App\Models\PlatformSetting;
 use App\Models\ServiceCategory;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Billing\HostedCheckoutGateway;
 use App\Services\Billing\PaymentGatewayInterface;
@@ -123,7 +124,7 @@ class AdminContentManagementTest extends TestCase
             'city_id' => $city->id, 'district_name' => 'Nilüfer', 'address' => 'Adres', 'plan' => 'profesyonel', 'category' => 'sac-kesim',
             'services' => 'Saç Kesimi:30:500', 'employees' => 'Ayşe | Mehmet',
         ])->assertSessionHasNoErrors()->assertRedirect();
-        $tenant = \App\Models\Tenant::where('name', 'Yeni Salon')->firstOrFail();
+        $tenant = Tenant::where('name', 'Yeni Salon')->firstOrFail();
         $this->assertSame(2, DB::table('employees')->where('tenant_id', $tenant->id)->count());
         $this->assertDatabaseHas('branches', ['tenant_id' => $tenant->id, 'city_id' => $city->id]);
         $this->assertDatabaseHas('subscriptions', ['tenant_id' => $tenant->id]);

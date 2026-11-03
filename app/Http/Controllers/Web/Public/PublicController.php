@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\City;
 use App\Models\CustomerFavorite;
 use App\Models\District;
+use App\Models\HomeContent;
 use App\Models\Review;
 use App\Models\ServiceCategory;
 use App\Models\Tenant;
@@ -56,18 +57,20 @@ class PublicController extends Controller
             : collect();
         $cards->prime($featured->concat($nearby));
 
-        $popularItems = \App\Models\HomeContent::where('kind', 'popular')->where('active', true)->orderBy('sort_order')->orderBy('id')->get();
+        $popularItems = HomeContent::where('kind', 'popular')->where('active', true)->orderBy('sort_order')->orderBy('id')->get();
         $categorySlugs = ServiceCategory::whereNull('tenant_id')->where('status', 'active')->pluck('slug', 'id');
         $prices = $cards->minPrices($categorySlugs->values()->all());
         $popular = $popularItems->filter(fn ($item) => ! $item->category_id || isset($categorySlugs[$item->category_id]))->map(function ($item) use ($prices, $categorySlugs, $location) {
             $slug = $item->category_id ? ($categorySlugs[$item->category_id] ?? null) : null;
             $url = $item->target_url ?: ($location->isSet() ? $location->searchUrl($slug ? ['kategori' => $slug] : []) : route('search', $slug ? ['kategori' => $slug] : []));
+
             return ['title' => $item->title, 'image' => $item->imageUrl(), 'url' => $url, 'price' => $slug && isset($prices[$slug]) ? Money::parse((string) $prices[$slug]) : null];
         });
+
         return view('public.home', [
             'rebook' => $rebook->items($request->user(), $request, limit: 8),
             'featured' => $featured, 'nearby' => $nearby, 'location' => $location, 'popular' => $popular,
-            'banners' => \App\Models\HomeContent::where('kind', 'banner')->where('active', true)->orderBy('sort_order')->orderBy('id')->get(),
+            'banners' => HomeContent::where('kind', 'banner')->where('active', true)->orderBy('sort_order')->orderBy('id')->get(),
             'tiles' => ServiceCategory::whereNull('tenant_id')->where('status', 'active')->where('show_on_home', true)->orderBy('sort_order')->orderBy('id')->get()->map(fn ($c) => ['label' => $c->home_label ?: $c->name, 'slug' => $c->slug, 'icon' => $c->icon, 'tone' => $c->tone, 'image' => $c->image_path ? asset('storage/'.$c->image_path) : null]),
         ]);
     }

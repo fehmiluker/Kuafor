@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\Web\Public\PublicController;
+use App\Models\HomeContent;
 use App\Models\ServiceCategory;
 use Illuminate\Database\Seeder;
 
@@ -19,13 +21,13 @@ class CategorySeeder extends Seeder
     {
         $i = 0;
         foreach (self::CATEGORIES as $slug => $name) {
-            $tile = collect(\App\Http\Controllers\Web\Public\PublicController::HOME_CATEGORIES)->firstWhere('slug', $slug);
+            $tile = collect(PublicController::HOME_CATEGORIES)->firstWhere('slug', $slug);
             $home = $tile ? ['home_label' => $tile['label'], 'icon' => $tile['icon'], 'tone' => $tile['tone'], 'show_on_home' => true] : [];
             ServiceCategory::query()->whereNull('tenant_id')->where('slug', $slug)->firstOr(fn () => (new ServiceCategory)->forceFill([
                 'tenant_id' => null, 'slug' => $slug, 'name' => $name, 'status' => 'active', 'sort_order' => $i,
                 ...$home,
             ])->save());
-            \App\Models\HomeContent::where('kind', 'popular')->where('target_url', '/salonlar?kategori='.$slug)->whereNull('category_id')->update(['category_id' => ServiceCategory::whereNull('tenant_id')->where('slug', $slug)->value('id')]);
+            HomeContent::where('kind', 'popular')->where('target_url', '/salonlar?kategori='.$slug)->whereNull('category_id')->update(['category_id' => ServiceCategory::whereNull('tenant_id')->where('slug', $slug)->value('id')]);
             $i++;
         }
     }

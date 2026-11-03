@@ -153,6 +153,7 @@ class BursaShowcaseSeeder extends Seeder
             $template[3] = 'Kurgusal tanıtım profili. Hizmet ve fiyatlar temsili olup bu profilden randevu alınamaz.';
             $salons[] = $template;
         }
+
         return $salons;
     }
 

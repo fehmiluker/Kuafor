@@ -6,9 +6,12 @@ use App\Enums\SalonApplicationStatus;
 use App\Exceptions\DomainRuleException;
 use App\Exceptions\PlanLimitException;
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Plan;
 use App\Models\SalonApplication;
+use App\Models\ServiceCategory;
 use App\Notifications\SalonApplicationRejected;
+use App\Rules\Phone;
 use App\Services\Audit\AuditLogger;
 use App\Services\Onboarding\SalonCsvImporter;
 use App\Services\Onboarding\SalonOnboardingService;
@@ -43,10 +46,11 @@ class AdminOnboardingController extends Controller
     public function createForm(Request $request): View
     {
         $this->need($request);
+
         return view('admin.onboarding.create', [
-            'cities' => \App\Models\City::orderBy('name')->get(),
+            'cities' => City::orderBy('name')->get(),
             'plans' => Plan::where('active', true)->orderBy('sort_order')->get(),
-            'categories' => \App\Models\ServiceCategory::whereNull('tenant_id')->where('status', 'active')->orderBy('sort_order')->get(),
+            'categories' => ServiceCategory::whereNull('tenant_id')->where('status', 'active')->orderBy('sort_order')->get(),
         ]);
     }
 
@@ -55,7 +59,7 @@ class AdminOnboardingController extends Controller
         $this->need($request);
         $d = $request->validate([
             'business_name' => ['required', 'string', 'max:150'], 'owner_name' => ['required', 'string', 'max:120'],
-            'owner_email' => ['required', 'email', 'max:254'], 'owner_phone' => ['nullable', new \App\Rules\Phone],
+            'owner_email' => ['required', 'email', 'max:254'], 'owner_phone' => ['nullable', new Phone],
             'city_id' => ['required', 'integer', 'exists:cities,id'], 'district_name' => ['required', 'string', 'max:100'],
             'address' => ['required', 'string', 'max:500'], 'description' => ['nullable', 'string', 'max:2000'],
             'plan' => ['required', Rule::exists('plans', 'slug')->where('active', true)],
@@ -64,7 +68,9 @@ class AdminOnboardingController extends Controller
             'invite' => ['nullable', 'boolean'],
         ]);
         [$services, $errors] = SalonCsvImporter::parseServices((string) ($d['services'] ?? ''));
-        if ($errors) { return back()->withInput()->withErrors(['services' => implode(' ', $errors)]); }
+        if ($errors) {
+            return back()->withInput()->withErrors(['services' => implode(' ', $errors)]);
+        }
         if (! empty($d['category'])) {
             $services = array_map(fn ($s) => array_replace($s, ['category' => $d['category']]), $services);
         }
@@ -72,7 +78,10 @@ class AdminOnboardingController extends Controller
         $d['employees'] = array_values(array_filter(array_map(fn ($n) => Str::limit(trim($n), 60, ''), preg_split('/[|\r\n]+/', (string) ($d['employees'] ?? '')) ?: [])));
         ['tenant' => $tenant, 'user' => $user] = $onboarding->create($d, 'admin');
         $this->audit->log('admin.salon_created', $tenant, [], ['name' => $tenant->name], tenantId: $tenant->id);
-        if ($request->boolean('invite')) { $onboarding->invite($user, $tenant); }
+        if ($request->boolean('invite')) {
+            $onboarding->invite($user, $tenant);
+        }
+
         return redirect()->route('admin.tenants.show', $tenant->id)->with('status', 'İşletme oluşturuldu.');
     }
 
