@@ -57,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveTenant::class);
         $middleware->redirectGuestsTo(fn (Request $r) => $r->expectsJson() ? null : route('login'));
         $middleware->validateCsrfTokens(except: ['webhooks/*']);
-        $middleware->trustProxies(at: env('TRUSTED_PROXIES', '127.0.0.1'));
+        // Trusted proxies come from config/trustedproxy.php (TRUSTED_PROXIES), so they survive config caching.
         $middleware->throttleApi('api');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
