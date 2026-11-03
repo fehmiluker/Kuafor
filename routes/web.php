@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\Admin\AdminContentController;
 use App\Http\Controllers\Web\Admin\AdminOnboardingController;
 use App\Http\Controllers\Web\Admin\AdminPanelController;
 use App\Http\Controllers\Web\Admin\AdminPaymentController;
+use App\Http\Controllers\Web\Admin\AdminSalonProfileController;
 use App\Http\Controllers\Web\Admin\AdminSecurityController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Customer\AccountController;
@@ -161,6 +162,8 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::get('isletmeler', [AdminPanelController::class, 'tenants'])->name('tenants');
         Route::get('isletmeler/yeni', [AdminOnboardingController::class, 'createForm'])->name('tenants.create');
         Route::post('isletmeler', [AdminOnboardingController::class, 'createSalon'])->name('tenants.store');
+        Route::get('isletmeler/{tenant:id}/profil', [AdminSalonProfileController::class, 'edit'])->name('tenants.profile');
+        Route::put('isletmeler/{tenant:id}/profil', [AdminSalonProfileController::class, 'update'])->name('tenants.profile.update');
         Route::get('isletmeler/{tenant:id}', [AdminPanelController::class, 'tenant'])->name('tenants.show');
         Route::post('isletmeler/{tenant:id}', [AdminPanelController::class, 'updateTenant'])->name('tenants.update');
         Route::post('abonelikler/{subscription}', [AdminPanelController::class, 'updateSubscription'])->name('subscriptions.update');

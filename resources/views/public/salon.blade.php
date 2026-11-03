@@ -34,8 +34,8 @@
         @if($tenant->description)<section class="card p-5"><h2 class="text-lg font-bold text-slate-900">Hakkında</h2><p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $tenant->description }}</p></section>@endif
 
         @if($media->isNotEmpty())
-            <section class="card p-5" aria-labelledby="g-h"><h2 id="g-h" class="text-lg font-bold text-slate-900">Fotoğraflar</h2>
-                <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">@foreach($media as $m)<img src="{{ $m->url() }}" alt="{{ $m->alt_text }}" loading="lazy" class="aspect-square w-full rounded-2xl object-cover">@endforeach</div>
+            <section class="card p-5" aria-labelledby="g-h"><h2 id="g-h" class="text-lg font-bold text-slate-900">İşletmeden Fotoğraflar</h2>
+                <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">@foreach($media as $m)<a href="{{ $m->url() }}" target="_blank" rel="noopener" aria-label="{{ $m->alt_text }} — büyüt"><img src="{{ $m->url() }}" alt="{{ $m->alt_text }}" loading="lazy" class="aspect-square w-full rounded-2xl object-cover"></a>@endforeach</div>
             </section>
         @endif
 
@@ -79,6 +79,17 @@
     </div>
 
     <aside class="space-y-6">
+        @php $contactLinks = \App\Services\Catalog\SalonProfileService::links($tenant); @endphp
+        @if(array_filter($contactLinks))
+        <section class="card space-y-3 p-5" aria-label="İletişim ve sosyal medya">
+            <h2 class="text-lg font-bold text-slate-900">İletişim ve Sosyal Medya</h2>
+            @if($contactLinks['whatsapp'])<a href="{{ $contactLinks['whatsapp'] }}" target="_blank" rel="noopener noreferrer" class="btn-primary w-full">WhatsApp ile Yaz</a>@endif
+            <div class="flex flex-wrap gap-2">
+                @if($contactLinks['instagram'])<a href="{{ $contactLinks['instagram'] }}" target="_blank" rel="noopener noreferrer" class="btn-secondary">Instagram ↗</a>@endif
+                @if($contactLinks['facebook'])<a href="{{ $contactLinks['facebook'] }}" target="_blank" rel="noopener noreferrer" class="btn-secondary">Facebook ↗</a>@endif
+            </div>
+        </section>
+        @endif
         @foreach($branches as $b)
             <section class="card p-5" aria-label="{{ $b->name }} bilgileri">
                 <h2 class="text-lg font-bold text-slate-900">{{ $b->name }}</h2>
