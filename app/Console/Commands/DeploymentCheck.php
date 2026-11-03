@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\QueueHeartbeat;
 use App\Services\Auth\WhatsAppOtpSender;
 use App\Services\Billing\PaymentGatewayInterface;
+use App\Services\Billing\PaymentSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -123,11 +124,13 @@ class DeploymentCheck extends Command
         $this->section('Dış servisler (demo güvenliği)');
         $waMode = config('whatsapp.mode');
         $realWhatsApp = $waMode === 'meta';
-        $paymentProvider = (string) config('subscriptions.provider');
+        $paymentSettings = app(PaymentSettings::class);
+        $paytr = $paymentSettings->paytr();
+        $paymentProvider = $paymentSettings->provider();
         $realPayment = $paymentProvider !== 'manual' || app(PaymentGatewayInterface::class)->supportsAutomaticCharging() || filled(config('subscriptions.webhook_secret'));
         $this->line('  WhatsApp: '.($realWhatsApp ? '<fg=yellow>GERÇEK (Meta Cloud API)</>' : 'kapalı / sandbox (gerçek mesaj gitmez)'));
         $this->line('  Ödeme: '.match (true) {
-            $paymentProvider === 'paytr' => '<fg=yellow>PayTR kartla ödeme AÇIK</>'.(config('subscriptions.paytr.test_mode') ? ' (test modu)' : ' (CANLI)'),
+            $paymentProvider === 'paytr' => '<fg=yellow>PayTR kartla ödeme AÇIK</>'.(($paytr['test_mode'] ?? true) ? ' (test modu)' : ' (CANLI)'),
             $realPayment => '<fg=yellow>ödeme bildirim adresi AÇIK</>',
             default => 'gerçek ödeme yok, bildirim adresi kapalı',
         });
@@ -137,14 +140,14 @@ class DeploymentCheck extends Command
             ? $this->ok('Telefon doğrulama: WhatsApp (platform numarası + "dogrulama_kodu" şablonu hazır)')
             : $this->softWarn('Telefon doğrulama kapalı: platform WhatsApp numarası bağlı değil veya "dogrulama_kodu" şablonu Meta\'da onaylanmadı. Adrese hizmet randevusu yalnızca telefonu doğrulanmış üyeler alabilir.');
         if ($paymentProvider === 'paytr') {
-            $this->check(filled(config('subscriptions.paytr.merchant_id')) && filled(config('subscriptions.paytr.merchant_key')) && filled(config('subscriptions.paytr.merchant_salt')),
+            $this->check(filled($paytr['merchant_id'] ?? null) && filled($paytr['merchant_key'] ?? null) && filled($paytr['merchant_salt'] ?? null),
                 'PayTR mağaza bilgileri tanımlı', '.env: PAYTR_MERCHANT_ID, PAYTR_MERCHANT_KEY, PAYTR_MERCHANT_SALT (PayTR Mağaza Paneli > Bilgi).');
             $this->line('  PayTR Bildirim URL: '.url('/webhooks/subscription-payments/paytr'));
         }
         if ($this->option('demo')) {
             $this->check(! $realWhatsApp, 'Demo: WhatsApp gerçek mesaj göndermiyor', 'Demo için .env: WHATSAPP_PROVIDER_MODE=fake');
             $this->check(blank(config('whatsapp.app_secret')) && blank(config('whatsapp.verify_token')), 'Demo: Meta anahtarları boş', 'Demo için META_APP_SECRET ve META_VERIFY_TOKEN boş bırakılmalı.');
-            $this->check(! $realPayment || ($paymentProvider === 'paytr' && config('subscriptions.paytr.test_mode')), 'Demo: gerçek ödeme kapalı', 'Demo için SUBSCRIPTION_PAYMENT_PROVIDER=manual (veya paytr + PAYTR_TEST_MODE=true) ve SUBSCRIPTION_WEBHOOK_SECRET boş olmalı.');
+            $this->check(! $realPayment || ($paymentProvider === 'paytr' && ($paytr['test_mode'] ?? true)), 'Demo: gerçek ödeme kapalı', 'Demo için SUBSCRIPTION_PAYMENT_PROVIDER=manual (veya paytr + PAYTR_TEST_MODE=true) ve SUBSCRIPTION_WEBHOOK_SECRET boş olmalı.');
             $this->check(config('mail.default') === 'log', 'Demo: e-posta dışarı gönderilmiyor', 'Demo için MAIL_MAILER=log önerilir.');
             $this->check(! app()->environment('production'), 'Demo: APP_ENV production değil', 'Demo verisi için APP_ENV=staging kullanın.');
         }

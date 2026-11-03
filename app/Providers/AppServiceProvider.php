@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Listeners\SendAppointmentNotifications;
 use App\Services\Billing\ManualPaymentGateway;
 use App\Services\Billing\PaymentGatewayInterface;
+use App\Services\Billing\PaymentSettings;
 use App\Services\Billing\PaytrPaymentGateway;
 use App\Services\Catalog\SalonCards;
 use App\Services\Tenancy\AccessScope;
@@ -33,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WhatsAppClientInterface::class, fn () => config('whatsapp.mode') === 'meta'
             ? new MetaCloudApiClient
             : new FakeWhatsAppClient);
-        $this->app->singleton(PaymentGatewayInterface::class, fn () => match (config('subscriptions.provider')) {
+        $this->app->scoped(PaymentGatewayInterface::class, fn () => match (app(PaymentSettings::class)->provider()) {
             'paytr' => PaytrPaymentGateway::fromConfig(),
             default => new ManualPaymentGateway,
         });

@@ -29,7 +29,7 @@ final class PaytrPaymentGateway implements HostedCheckoutGateway
 
     public static function fromConfig(): self
     {
-        return new self((array) config('subscriptions.paytr'));
+        return new self(app(PaymentSettings::class)->paytr());
     }
 
     public function name(): string

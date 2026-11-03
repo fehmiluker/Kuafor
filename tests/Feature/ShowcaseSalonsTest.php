@@ -23,7 +23,7 @@ class ShowcaseSalonsTest extends TestCase
         $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
 
         $salons = Tenant::where('is_showcase', true)->get();
-        $this->assertCount(count(BursaShowcaseSeeder::SALONS), $salons);
+        $this->assertCount(count(BursaShowcaseSeeder::salons()), $salons);
         foreach ($salons as $t) {
             $this->assertGreaterThanOrEqual(3, $t->rating_count, $t->name);
             $this->assertTrue($t->rating_avg >= 3 && $t->rating_avg <= 5, $t->name);
@@ -60,9 +60,9 @@ class ShowcaseSalonsTest extends TestCase
         $this->assertGreaterThan(0, $tenant->refresh()->rating_count);
     }
 
-    public function test_there_are_twenty_and_salons_dropped_from_the_list_are_removed(): void
+    public function test_there_are_one_hundred_and_salons_dropped_from_the_list_are_removed(): void
     {
-        $this->assertCount(20, BursaShowcaseSeeder::SALONS);
+        $this->assertCount(100, BursaShowcaseSeeder::salons());
         $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
         $old = Tenant::where('is_showcase', true)->firstOrFail();
         $old->forceFill(['slug' => 'eski-ornek-bursa'])->save();
@@ -80,7 +80,7 @@ class ShowcaseSalonsTest extends TestCase
         $this->get('/')->assertOk()->assertSee('Masaj')->assertSee('kategori=masaj', false)->assertDontSee('kategori=makyaj', false);
 
         $this->artisan('kuafor:ornek-isletmeler')->assertSuccessful();
-        $this->get(route('search', ['city' => 'bursa', 'kategori' => 'masaj']))->assertOk()->assertSee('4 salon bulundu');
+        $this->get(route('search', ['city' => 'bursa', 'kategori' => 'masaj']))->assertOk()->assertSee('20 salon bulundu');
 
         // A salon created before "Masaj" was in the list gets the service on the next run (with its staff).
         $salon = Tenant::where('slug', 'ipek-yolu-guzellik-merkezi-bursa')->firstOrFail();

@@ -140,6 +140,23 @@ class BursaShowcaseSeeder extends Seeder
         'Yasemin Çelik', 'Ayşe Demir', 'Fatma Şahin', 'Emre Arslan', 'Burak Özdemir', 'Zeynep Aydın', 'Elif Kaya', 'Hakan Çetin', 'Seda Yıldız',
         'Gamze Polat', 'Özlem Korkmaz', 'Serkan Erdoğan', 'Pınar Kurt', 'Ebru Özkan', 'Volkan Aslan', 'Buse Tunç', 'Derya Uçar', 'Oya Bulut'];
 
+    /** Stable set of 100 fictional salons; repeat runs never duplicate them. */
+    public static function salons(): array
+    {
+        $salons = self::SALONS;
+        $names = ['Amber', 'Lale', 'Mimoza', 'Safir', 'Mercan', 'Lavanta', 'Defne', 'Yasemin', 'Zümrüt', 'İnci', 'Begonya', 'Frezya', 'Orkide', 'Menekşe', 'Manolya', 'Fulya'];
+        $types = ['Saç Atölyesi', 'Berber Stüdyo', 'Güzellik Atölyesi', 'Tırnak Stüdyo', 'Bakım ve Spa'];
+        for ($i = 0; $i < 80; $i++) {
+            $template = self::SALONS[$i % count(self::SALONS)];
+            $template[0] = $names[intdiv($i, 5)].' '.$types[$i % 5];
+            $template[2] = 'Tanıtım kaydı — ziyaret ve randevu kabul edilmez';
+            $template[3] = 'Kurgusal tanıtım profili. Hizmet ve fiyatlar temsili olup bu profilden randevu alınamaz.';
+            $salons[] = $template;
+        }
+
+        return $salons;
+    }
+
     public function run(): void
     {
         $city = City::where('slug', 'bursa')->first();
@@ -156,7 +173,7 @@ class BursaShowcaseSeeder extends Seeder
         }
 
         // Showcase salons dropped from the list (e.g. 22 -> 20) are removed like `--kaldir` does.
-        $slugs = array_map(fn ($salon) => Str::slug($salon[0]).'-bursa', self::SALONS);
+        $slugs = array_map(fn ($salon) => Str::slug($salon[0]).'-bursa', self::salons());
         $removed = 0;
         Tenant::where('is_showcase', true)->whereNotIn('slug', $slugs)->each(function (Tenant $t) use (&$removed) {
             $t->forceFill(['public_listing_enabled' => false])->save();
@@ -165,7 +182,7 @@ class BursaShowcaseSeeder extends Seeder
         });
 
         $created = 0;
-        foreach (self::SALONS as [$name, $districtSlug, $address, $description, $image, $staff, $services]) {
+        foreach (self::salons() as [$name, $districtSlug, $address, $description, $image, $staff, $services]) {
             $slug = Str::slug($name).'-bursa';
             if ($existing = Tenant::withTrashed()->where('slug', $slug)->first()) {
                 // Services added to the list later (e.g. "Masaj") are added to salons from earlier runs.

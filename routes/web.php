@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Web\Admin\AdminAdController;
+use App\Http\Controllers\Web\Admin\AdminContentController;
 use App\Http\Controllers\Web\Admin\AdminOnboardingController;
 use App\Http\Controllers\Web\Admin\AdminPanelController;
+use App\Http\Controllers\Web\Admin\AdminPaymentController;
 use App\Http\Controllers\Web\Admin\AdminSecurityController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Customer\AccountController;
@@ -157,6 +159,8 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::get('guvenlik', [AdminSecurityController::class, 'edit'])->name('security');
         Route::put('guvenlik/parola', [AdminSecurityController::class, 'update'])->middleware('throttle:5,1')->name('security.password');
         Route::get('isletmeler', [AdminPanelController::class, 'tenants'])->name('tenants');
+        Route::get('isletmeler/yeni', [AdminOnboardingController::class, 'createForm'])->name('tenants.create');
+        Route::post('isletmeler', [AdminOnboardingController::class, 'createSalon'])->name('tenants.store');
         Route::get('isletmeler/{tenant:id}', [AdminPanelController::class, 'tenant'])->name('tenants.show');
         Route::post('isletmeler/{tenant:id}', [AdminPanelController::class, 'updateTenant'])->name('tenants.update');
         Route::post('abonelikler/{subscription}', [AdminPanelController::class, 'updateSubscription'])->name('subscriptions.update');
@@ -167,6 +171,20 @@ Route::middleware(['auth', 'noindex'])->group(function () {
         Route::post('moderasyon/{review}', [AdminPanelController::class, 'moderate'])->whereNumber('review')->name('moderate');
         Route::get('denetim', [AdminPanelController::class, 'audit'])->name('audit');
         Route::get('sistem', [AdminPanelController::class, 'system'])->name('system');
+        Route::get('odeme-ayarlari', [AdminPaymentController::class, 'edit'])->name('payments');
+        Route::put('odeme-ayarlari', [AdminPaymentController::class, 'update'])->name('payments.update');
+        Route::get('kategoriler', [AdminContentController::class, 'categories'])->name('categories');
+        Route::post('kategoriler', [AdminContentController::class, 'saveCategory'])->name('categories.store');
+        Route::put('kategoriler/{category}', [AdminContentController::class, 'saveCategory'])->whereNumber('category')->name('categories.update');
+        Route::delete('kategoriler/{category}', [AdminContentController::class, 'deleteCategory'])->whereNumber('category')->name('categories.destroy');
+        Route::prefix('icerik/{kind}')->where(['kind' => 'banner|popular'])->group(function () {
+            Route::get('/', [AdminContentController::class, 'index'])->name('content.index');
+            Route::get('yeni', [AdminContentController::class, 'form'])->name('content.create');
+            Route::post('/', [AdminContentController::class, 'save'])->name('content.store');
+            Route::get('{item}', [AdminContentController::class, 'form'])->whereNumber('item')->name('content.edit');
+            Route::put('{item}', [AdminContentController::class, 'save'])->whereNumber('item')->name('content.update');
+            Route::delete('{item}', [AdminContentController::class, 'destroy'])->whereNumber('item')->name('content.destroy');
+        });
         Route::get('reklamlar', [AdminAdController::class, 'index'])->name('ads.index');
         Route::get('reklamlar/yeni', [AdminAdController::class, 'create'])->name('ads.create');
         Route::post('reklamlar', [AdminAdController::class, 'store'])->name('ads.store');

@@ -74,3 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('calendar');
     if (el) initCalendar(el);
 });
+
+// Native scrolling preserves swipe and keyboard access without autoplay.
+document.querySelectorAll('[data-carousel]').forEach((carousel) => {
+    const track = carousel.querySelector('[data-carousel-track]');
+    carousel.querySelectorAll('[data-carousel-step]').forEach((button) => {
+        button.addEventListener('click', () => track.scrollBy({
+            left: Number(button.dataset.carouselStep) * track.clientWidth,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        }));
+    });
+});
