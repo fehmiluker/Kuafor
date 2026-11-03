@@ -26,7 +26,7 @@
     </div>
 </div>
 @if($tenant->is_showcase)
-    <p class="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200" role="note"><strong>Örnek işletme.</strong> Bu sayfa platformun nasıl görüneceğini göstermek için hazırlanmıştır; bu işletmeden online randevu alınamaz. <a href="{{ route('search') }}" class="font-semibold underline">Randevu alabileceğiniz salonlara göz atın.</a></p>
+    <p class="mt-4 rounded-xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200" role="note">Bu sayfa platformun nasıl görüneceğini göstermek için hazırlanmıştır; bu işletmeden online randevu alınamaz. <a href="{{ route('search') }}" class="font-semibold underline">Randevu alabileceğiniz salonlara göz atın.</a></p>
 @endif
 
 <div class="mt-6 grid gap-6 lg:grid-cols-3">
@@ -59,7 +59,7 @@
         <section class="card p-5" aria-labelledby="rev-h">
             @if($tenant->is_showcase)
                 <h2 id="rev-h" class="text-lg font-bold text-slate-900">Örnek değerlendirmeler</h2>
-                <p class="text-xs text-slate-500">Bu yorumlar örnek işletmenin görünümünü göstermek için hazırlanmış tanıtım metinleridir; gerçek müşteri değerlendirmesi değildir.</p>
+                <p class="text-xs text-slate-500">Bu yorumlar tanıtım amaçlı hazırlanmıştır; gerçek müşteri değerlendirmesi değildir.</p>
             @else
                 <h2 id="rev-h" class="text-lg font-bold text-slate-900">Doğrulanmış değerlendirmeler</h2>
                 <p class="text-xs text-slate-500">Yalnızca bu salonda randevusu tamamlanan müşteriler değerlendirme yazabilir.</p>
