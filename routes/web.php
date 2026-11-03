@@ -3,6 +3,7 @@
 use App\Http\Controllers\Web\Admin\AdminAdController;
 use App\Http\Controllers\Web\Admin\AdminOnboardingController;
 use App\Http\Controllers\Web\Admin\AdminPanelController;
+use App\Http\Controllers\Web\Admin\AdminSecurityController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\Customer\AccountController;
 use App\Http\Controllers\Web\Public\AdClickController;
@@ -153,6 +154,8 @@ Route::middleware(['auth', 'noindex'])->group(function () {
     // ------------------------------------------------------------ super admin
     Route::prefix('admin')->name('admin.')->middleware('platform')->group(function () {
         Route::get('/', [AdminPanelController::class, 'dashboard'])->name('dashboard');
+        Route::get('guvenlik', [AdminSecurityController::class, 'edit'])->name('security');
+        Route::put('guvenlik/parola', [AdminSecurityController::class, 'update'])->middleware('throttle:5,1')->name('security.password');
         Route::get('isletmeler', [AdminPanelController::class, 'tenants'])->name('tenants');
         Route::get('isletmeler/{tenant:id}', [AdminPanelController::class, 'tenant'])->name('tenants.show');
         Route::post('isletmeler/{tenant:id}', [AdminPanelController::class, 'updateTenant'])->name('tenants.update');
