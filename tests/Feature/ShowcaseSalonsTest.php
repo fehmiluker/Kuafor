@@ -46,7 +46,7 @@ class ShowcaseSalonsTest extends TestCase
             ->assertDontSee('✓ Doğrulanmış')->assertDontSee('aggregateRating')->assertDontSee(route('salon.book', $tenant->slug));
 
         $top = Tenant::where('is_showcase', true)->orderByDesc('rating_avg')->orderByDesc('rating_count')->firstOrFail();
-        $this->get(route('search', ['city' => 'bursa']))->assertOk()->assertSee('Örnek işletme')->assertSee($top->name)->assertDontSee('@else', false);
+        $this->get(route('search', ['city' => 'bursa']))->assertOk()->assertDontSee('Örnek işletme')->assertSee($top->name)->assertDontSee('@else', false);
     }
 
     public function test_showcase_salons_without_reviews_from_an_earlier_run_get_reviews(): void
