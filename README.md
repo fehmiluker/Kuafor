@@ -97,7 +97,7 @@ Ayrıca: Pint temiz, `npm run build` başarılı, Playwright ile mobil tarayıc�
 | [whatsapp.md](docs/whatsapp.md) | Meta Cloud API akışları, güvenlik, canlıya alma listesi |
 | [security.md](docs/security.md) | RBAC, uygulama güvenliği, KVKK (hukuki doğrulama gereken maddeler) |
 | [vps-kurulum.md](docs/vps-kurulum.md) | **VPS (Hostinger) demo kurulumu tek komutla**: Nginx, PHP, MySQL, kuyruk, cron, HTTPS, site şifresi |
-| [paytr-netgsm.md](docs/paytr-netgsm.md) | PayTR abonelik ödemesi ve Netgsm SMS kurulumu, test listesi |
+| [paytr.md](docs/paytr.md) | PayTR abonelik ödemesi kurulumu, test listesi |
 | [cpanel-kurulum.md](docs/cpanel-kurulum.md) | **cPanel demo kurulumu adım adım** (Node.js gerekmez), demo hesapları, kurulum sonrası test listesi |
 | [deployment.md](docs/deployment.md) | VPS kurulumu, Nginx/PHP-FPM, kuyruk, zamanlayıcı, yedek/geri yükleme |
 | [test-plan.md](docs/test-plan.md) | Senaryolar ve sınırlar |
@@ -109,6 +109,6 @@ Dağıtım dosyaları: `deploy/` (nginx, supervisor, systemd, backup/restore/dep
 | Entegrasyon | Bu teslimatta | Canlı için |
 |---|---|---|
 | WhatsApp | Hibrit: platform numarası (varsayılan, salon ayar yapmaz) + isteğe bağlı kendi numarası ("WhatsApp'ı bağla"). `fake` modu: gerçek mesaj yok; tüm akışlar testli | Meta işletme doğrulaması, App Review, numara kaydı, şablon onayı, `WHATSAPP_PROVIDER_MODE=meta` — [checklist](docs/whatsapp.md#canlıya-alma-kontrol-listesi) |
-| SMS (OTP) | `log` (varsayılan) veya **Netgsm** (`SMS_PROVIDER=netgsm`) | Netgsm API kullanıcısı + onaylı başlık — [kurulum](docs/paytr-netgsm.md#2-netgsm--sms-telefon-doğrulama-kodları) |
+| Telefon doğrulama (OTP) | **WhatsApp** (platform numarası + `dogrulama_kodu` kimlik doğrulama şablonu); SMS yok | Meta'da şablon onayı — [whatsapp.md](docs/whatsapp.md#telefon-doğrulama-kodu) |
 | E-posta | `log`/SMTP | SMTP bilgileri |
-| Abonelik tahsilatı | `manual` (yönetici aktivasyonu) veya **PayTR** iFrame ile salon sahibinin kartla ödemesi (`SUBSCRIPTION_PAYMENT_PROVIDER=paytr`); otomatik/tekrarlayan çekim **yok** | PayTR mağaza bilgileri + Bildirim URL — [kurulum](docs/paytr-netgsm.md#1-paytr--kartla-abonelik-ödemesi) |
+| Abonelik tahsilatı | `manual` (yönetici aktivasyonu) veya **PayTR** iFrame ile salon sahibinin kartla ödemesi (`SUBSCRIPTION_PAYMENT_PROVIDER=paytr`); otomatik/tekrarlayan çekim **yok** | PayTR mağaza bilgileri + Bildirim URL — [kurulum](docs/paytr.md#1-paytr--kartla-abonelik-ödemesi) |

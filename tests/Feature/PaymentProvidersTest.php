@@ -4,12 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\SubscriptionStatus;
 use App\Enums\TenantRole;
-use App\Exceptions\DomainRuleException;
 use App\Models\Subscription;
 use App\Models\SubscriptionCheckout;
-use App\Services\Auth\PhoneVerificationService;
 use App\Services\Billing\PaymentGatewayInterface;
-use App\Services\Sms\SmsProviderInterface;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Testing\TestResponse;
@@ -17,7 +14,7 @@ use Tests\Support\ActsInTenant;
 use Tests\Support\BuildsSalon;
 use Tests\TestCase;
 
-/** PayTR subscription checkout + Netgsm SMS, with the providers' HTTP APIs faked. */
+/** PayTR subscription checkout, with the provider's HTTP API faked. */
 class PaymentProvidersTest extends TestCase
 {
     use ActsInTenant, BuildsSalon;
@@ -164,62 +161,13 @@ class PaymentProvidersTest extends TestCase
         $this->post('/panel/abonelik/odeme')->assertNotFound();
     }
 
-    private function useNetgsm(bool $otp = false): SmsProviderInterface
-    {
-        config([
-            'sms.provider' => 'netgsm',
-            'sms.netgsm.usercode' => '8501234567', 'sms.netgsm.password' => 'secret', 'sms.netgsm.header' => 'KUAFORRNDV',
-            'sms.netgsm.otp' => $otp,
-        ]);
-        $this->app->forgetInstance(SmsProviderInterface::class);
-
-        return app(SmsProviderInterface::class);
-    }
-
-    public function test_netgsm_sends_with_basic_auth_and_turkish_encoding(): void
-    {
-        Http::fake(['api.netgsm.com.tr/*' => Http::response(['code' => '00', 'jobid' => '17377215342605050417149344', 'description' => 'queued'])]);
-        $this->useNetgsm()->send('+905551112233', 'Doğrulama kodunuz: 123456');
-
-        Http::assertSent(fn (HttpRequest $r) => $r->url() === 'https://api.netgsm.com.tr/sms/rest/v2/send'
-            && $r->hasHeader('Authorization', 'Basic '.base64_encode('8501234567:secret'))
-            && $r['msgheader'] === 'KUAFORRNDV' && $r['encoding'] === 'TR'
-            && $r['messages'] === [['msg' => 'Doğrulama kodunuz: 123456', 'no' => '905551112233']]);
-    }
-
-    public function test_netgsm_otp_endpoint_and_errors(): void
-    {
-        Http::fake(['api.netgsm.com.tr/sms/rest/v2/otp' => Http::sequence()
-            ->push(['code' => '00', 'jobid' => '1'])
-            ->push(['code' => '30', 'description' => 'Invalid credentials'])]);
-        $sms = $this->useNetgsm(otp: true);
-        $sms->send('+905551112233', 'Doğrulama kodunuz: 123456');
-        Http::assertSent(fn (HttpRequest $r) => $r->url() === 'https://api.netgsm.com.tr/sms/rest/v2/otp'
-            && $r['msg'] === 'Dogrulama kodunuz: 123456' && $r['no'] === '905551112233');
-
-        $this->expectException(DomainRuleException::class);
-        $sms->send('+905551112233', 'Doğrulama kodunuz: 654321');
-    }
-
-    public function test_phone_verification_uses_the_configured_sms_provider(): void
-    {
-        Http::fake(['api.netgsm.com.tr/*' => Http::response(['code' => '00', 'jobid' => '1'])]);
-        $this->useNetgsm();
-        $this->app->forgetInstance(PhoneVerificationService::class);
-        app(PhoneVerificationService::class)->send('+905551112233', 'account');
-        Http::assertSentCount(1);
-    }
-
     public function test_provider_network_errors_become_friendly_messages(): void
     {
         $this->usePaytr();
         $this->buildSalon();
-        Http::fake(['www.paytr.com/*' => Http::response('Forbidden', 403), 'api.netgsm.com.tr/*' => Http::failedConnection()]);
+        Http::fake(['www.paytr.com/*' => Http::response('Forbidden', 403)]);
         $this->actingAs($this->owner($this->tenant));
         $this->from('/panel/abonelik')->post('/panel/abonelik/odeme')->assertRedirect('/panel/abonelik');
         $this->assertSame('failed', SubscriptionCheckout::first()->status);
-
-        $this->expectException(DomainRuleException::class);
-        $this->useNetgsm()->send('+905551112233', 'kod');
     }
 }

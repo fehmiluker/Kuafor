@@ -117,7 +117,9 @@
             @if(($settings?->requirePhoneVerification || $home) && !(auth()->user()?->phone_verified_at))
                 <div class="rounded-lg bg-slate-50 p-3">
                     <p class="text-sm">{{ $home ? 'Adrese hizmet için telefon numaranızı doğrulamanız gerekiyor.' : 'Bu salon telefon doğrulaması istiyor.' }}</p>
-                    <div class="mt-2 flex gap-2"><input wire:model="code" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" class="input max-w-40" aria-label="Doğrulama kodu"><button type="button" wire:click="sendCode" class="btn-secondary">{{ $codeSent ? 'Tekrar gönder' : 'Kod gönder' }}</button></div>
+                    <div class="mt-2 flex gap-2"><input wire:model="code" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" class="input max-w-40" aria-label="Doğrulama kodu"><button type="button" wire:click="sendCode" class="btn-secondary">{{ $codeSent ? 'Tekrar gönder' : 'WhatsApp ile kod gönder' }}</button></div>
+                    <p class="mt-1 text-xs text-slate-500">{{ $codeSent ? 'Kod WhatsApp\'ınıza gönderildi (10 dakika geçerli).' : 'Kod bu numaranın WhatsApp hesabına gelir.' }}</p>
+                    @error('code')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
             @endif
             <label class="flex items-start gap-2 text-sm"><input type="checkbox" wire:model="kvkk" class="mt-1" required> <span><a href="{{ route('kvkk') }}" target="_blank" class="text-brand-700 underline">Aydınlatma metnini</a> okudum. *</span></label>

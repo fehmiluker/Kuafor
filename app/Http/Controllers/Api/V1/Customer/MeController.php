@@ -45,7 +45,7 @@ class MeController extends Controller
             'name' => ['sometimes', 'string', 'min:2', 'max:120'],
             'locale' => ['sometimes', 'in:tr,en'],
             'notification_preferences' => ['sometimes', 'array'],
-            'notification_preferences.*.channel' => ['required', 'in:whatsapp,email,sms'],
+            'notification_preferences.*.channel' => ['required', 'in:whatsapp,email'],
             'notification_preferences.*.category' => ['required', 'in:transactional,reminder,review_invite,marketing'],
             'notification_preferences.*.enabled' => ['required', 'boolean'],
         ]);

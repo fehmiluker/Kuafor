@@ -14,7 +14,7 @@ class DeploymentCheckTest extends TestCase
     {
         parent::setUp();
         // phpunit.xml sets fake Meta/billing secrets for the webhook tests; a demo server leaves them empty.
-        config(['whatsapp.app_secret' => null, 'whatsapp.verify_token' => null, 'subscriptions.webhook_secret' => null, 'mail.default' => 'log', 'sms.provider' => 'log']);
+        config(['whatsapp.app_secret' => null, 'whatsapp.verify_token' => null, 'subscriptions.webhook_secret' => null, 'mail.default' => 'log']);
     }
 
     public function test_demo_check_passes_with_safe_defaults(): void

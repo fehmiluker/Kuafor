@@ -6,13 +6,13 @@ use App\DTOs\Appointments\Actor;
 use App\Models\Appointment;
 use App\Models\GuestAccessToken;
 use App\Services\Booking\AppointmentService;
-use App\Services\Sms\SmsProviderInterface;
 use Tests\Support\BuildsSalon;
+use Tests\Support\WhatsAppOtp;
 use Tests\TestCase;
 
 class PublicApiTest extends TestCase
 {
-    use BuildsSalon;
+    use BuildsSalon, WhatsAppOtp;
 
     private function payload(array $over = []): array
     {
@@ -111,9 +111,8 @@ class PublicApiTest extends TestCase
         $this->buildSalon('automatic');
         $this->builder->settings(['require_phone_verification' => true]);
         $this->postJson('/api/v1/appointments', $this->payload())->assertStatus(422)->assertJsonPath('errors.0.code', 'phone_verification_required');
+        $this->connectPlatformWhatsApp();
         $this->postJson('/api/v1/booking/verify-phone', ['phone' => '05551112233'])->assertOk();
-        $sms = app(SmsProviderInterface::class)->sent;
-        preg_match('/(\d{6})/', end($sms)['message'], $m);
-        $this->postJson('/api/v1/appointments', $this->payload(['verification_code' => $m[1]]))->assertCreated();
+        $this->postJson('/api/v1/appointments', $this->payload(['verification_code' => $this->lastOtp('+905551112233')]))->assertCreated();
     }
 }

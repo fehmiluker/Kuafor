@@ -19,7 +19,7 @@
         <x-input name="proposal_ttl_minutes" label="Alternatif saat teklifinin geçerliliği (dk)" type="number" :value="$booking->proposalTtlMinutes" required />
         <x-input name="reminder_hours_before" label="Hatırlatma (saat önce)" type="number" :value="$booking->reminderHoursBefore" required />
     </div>
-    <label class="flex items-center gap-2 text-sm"><input type="hidden" name="require_phone_verification" value="0"><input type="checkbox" name="require_phone_verification" value="1" @checked($booking->requirePhoneVerification)> Üye olmayan müşterilerden SMS ile telefon doğrulaması iste</label>
+    <label class="flex items-center gap-2 text-sm"><input type="hidden" name="require_phone_verification" value="0"><input type="checkbox" name="require_phone_verification" value="1" @checked($booking->requirePhoneVerification)> Üye olmayan müşterilerden WhatsApp ile telefon doğrulaması iste</label>
     <button class="btn-primary">Kaydet</button>
 </form>
 

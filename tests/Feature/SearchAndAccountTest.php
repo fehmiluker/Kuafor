@@ -6,16 +6,16 @@ use App\Models\City;
 use App\Models\District;
 use App\Models\User;
 use App\Services\Auth\CustomerLinker;
-use App\Services\Sms\SmsProviderInterface;
 use Database\Seeders\GeoSeeder;
 use Database\Seeders\Support\SalonBuilder;
 use Tests\Support\ActsInTenant;
 use Tests\Support\BuildsSalon;
+use Tests\Support\WhatsAppOtp;
 use Tests\TestCase;
 
 class SearchAndAccountTest extends TestCase
 {
-    use ActsInTenant, BuildsSalon;
+    use ActsInTenant, BuildsSalon, WhatsAppOtp;
 
     protected function setUp(): void
     {
@@ -86,11 +86,12 @@ class SearchAndAccountTest extends TestCase
         $this->book($this->at('10:00'), phone: '+905551112233');
         $u = User::factory()->create(['phone_e164' => '+905551112233', 'phone_verified_at' => null]);
         $this->api($u)->getJson('/api/v1/me/appointments')->assertJsonCount(0, 'data');
+        $this->connectPlatformWhatsApp();
         $this->api($u)->postJson('/api/v1/auth/verify-phone')->assertOk();
-        $sms = app(SmsProviderInterface::class)->sent;
-        preg_match('/(\d{6})/', end($sms)['message'], $m);
+        $code = $this->lastOtp('+905551112233');
+        $this->assertMatchesRegularExpression('/^\d{6}$/', (string) $code);
         $this->api($u)->postJson('/api/v1/auth/verify-phone', ['code' => '000000'])->assertStatus(422);
-        $this->api($u)->postJson('/api/v1/auth/verify-phone', ['code' => $m[1]])->assertOk()->assertJsonPath('data.linked_bookings', 1);
+        $this->api($u)->postJson('/api/v1/auth/verify-phone', ['code' => $code])->assertOk()->assertJsonPath('data.linked_bookings', 1);
         $this->api($u)->getJson('/api/v1/me/appointments')->assertJsonCount(1, 'data');
     }
 

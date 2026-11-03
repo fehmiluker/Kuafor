@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Proje
 Kuaför/güzellik salonları için çok işletmeli (multi-tenant) SaaS randevu platformu. Laravel 12 monolit (kurumsal lacivert tema) · PHP 8.4 hedef (8.3+) · MySQL 8 · Blade + Livewire 3 (Alpine) · Tailwind 4 + Vite · FullCalendar 6 · REST API v1 (Sanctum). Arayüz metinleri ve dokümanlar Türkçe; kod ve kod yorumları İngilizce.
 
-**Müşteriden online ödeme/kapora alınmaz** — `appointment_payments` yalnızca kayıttır; kartla ödeme yalnızca salon sahibinin platform aboneliği içindir (PayTR). Ayrıntılı belgeler `docs/` altında (architecture, decisions/ADR, erd, api, security, whatsapp, paytr-netgsm, cpanel-kurulum, deployment, test-plan).
+**Müşteriden online ödeme/kapora alınmaz** — `appointment_payments` yalnızca kayıttır; kartla ödeme yalnızca salon sahibinin platform aboneliği içindir (PayTR). Ayrıntılı belgeler `docs/` altında (architecture, decisions/ADR, erd, api, security, whatsapp, paytr, cpanel-kurulum, deployment, test-plan).
 
 ## Dallar ve yayın
 - `main`: kararlı sürüm; cPanel kurulumu (`docs/cpanel-kurulum.md`) bu daldan çeker. `claude/kuafor-saas-platform`: geliştirme dalı. `design/modern-purple-ui`: yeni arayüz (PR #1, taslak).
@@ -61,8 +61,8 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 
 ### Entegrasyonlar (arayüz + sahte/yerel uygulama)
 - WhatsApp: `WhatsAppClientInterface` → `MetaCloudApiClient` / `FakeWhatsAppClient` (`WHATSAPP_PROVIDER_MODE=fake|meta`). Hibrit numara modeli (platform numarası varsayılan, şube kendi numarası opsiyonel) — ADR-013, `docs/whatsapp.md`. Webhook'lar `routes/webhooks.php` (CSRF muaf, imza doğrulamalı).
-- SMS: `SmsProviderInterface` → `LogSmsProvider` / `NetgsmSmsProvider` (`SMS_PROVIDER=log|netgsm`).
-- Abonelik tahsilatı: `PaymentGatewayInterface` → `ManualPaymentGateway` / `PaytrPaymentGateway` (`SUBSCRIPTION_PAYMENT_PROVIDER=manual|paytr`). PayTR `HostedCheckoutGateway`'dir: `CheckoutService` `subscription_checkouts` kaydı + iFrame token oluşturur; sonuç yalnızca imzalı callback'ten (`/webhooks/subscription-payments/paytr`, cevap düz `OK`) gelir, tutar checkout kaydından alınır. Tekrarlayan çekim yok. Ayrıntı: `docs/paytr-netgsm.md`.
+- **SMS yok.** Telefon doğrulama kodları `Services/Auth/WhatsAppOtpSender` ile platform WhatsApp numarasından (`otp_code` / `dogrulama_kodu` AUTHENTICATION şablonu, senkron) gider; `PhoneVerificationService` bunu kullanır (ADR-015). Yeni bir bildirim için SMS eklemeyin.
+- Abonelik tahsilatı: `PaymentGatewayInterface` → `ManualPaymentGateway` / `PaytrPaymentGateway` (`SUBSCRIPTION_PAYMENT_PROVIDER=manual|paytr`). PayTR `HostedCheckoutGateway`'dir: `CheckoutService` `subscription_checkouts` kaydı + iFrame token oluşturur; sonuç yalnızca imzalı callback'ten (`/webhooks/subscription-payments/paytr`, cevap düz `OK`) gelir, tutar checkout kaydından alınır. Tekrarlayan çekim yok. Ayrıntı: `docs/paytr.md`.
 - Abonelik hakları `entitlements_snapshot`'tan okunur (ADR-007): `EntitlementService`, `subscribed` / `feature` middleware'leri, `PlanLimitException`.
 - Sağlayıcılar `AppServiceProvider::register` içinde config'e göre **singleton** bağlanır. Sağlayıcı HTTP hataları (`HttpClientException`) log'a yazılır, kullanıcıya `DomainRuleException` ile genel mesaj gösterilir.
 - Reklamlar (sponsor banner): platform düzeyi `AdCampaign` (tenant'sız), `Services/Ads/AdService::pick($placement, $cityId)` (şehre özel > genel, `weight` ile rastgele), Blade `<x-ad-slot placement="panel_dashboard|home|search" />`. Kendi barındırdığımız görseller: üçüncü taraf reklam kodu/çerez yok (CSP ve KVKK için bilinçli). Tıklama `/reklam/{id}` → sayaç + DB'deki adrese yönlendirme (açık yönlendirme yok). Yönetim: `/admin/reklamlar` (`platform.settings`). Her bannerda "Reklam" etiketi zorunlu; salon profil sayfasına ve randevu sihirbazına reklam konmaz.
@@ -85,5 +85,5 @@ php artisan kuafor:check [--demo]   # kurulum/sağlık kontrolü
 - `Tests\TestCase`: `RefreshDatabase` + `TestBaseSeeder`, `plan($slug)`, `inTenant()`.
 - `Tests\Support\BuildsSalon`: standart fixture (Profesyonel plan, İstanbul şubesi, 2 hizmet, 2 personel), zamanı **Pazartesi 2026-11-02 08:00 İstanbul**'a sabitler; `at('10:00')` yerel saati UTC'ye çevirir.
 - Seeder tarafında `Database\Seeders\Support\SalonBuilder` fixture/demosalon kurar.
-- `phpunit.xml` dış servisleri kapatır (`WHATSAPP_PROVIDER_MODE=fake`, `SMS_PROVIDER=log`, `manual` ödeme). Başka sağlayıcıyı test ederken `config([...])` sonrası `$this->app->forgetInstance(Interface::class)` yapın ve dış API'yi `Http::fake()` ile taklit edin (örnek: `tests/Feature/PaymentProvidersTest.php`).
+- `phpunit.xml` dış servisleri kapatır (`WHATSAPP_PROVIDER_MODE=fake`, `manual` ödeme). Başka sağlayıcıyı test ederken `config([...])` sonrası `$this->app->forgetInstance(Interface::class)` yapın ve dış API'yi `Http::fake()` ile taklit edin (örnek: `tests/Feature/PaymentProvidersTest.php`).
 - Web panel testleri: `$this->actingAs($this->owner($this->tenant))` (tek üyelik → tenant otomatik seçilir).

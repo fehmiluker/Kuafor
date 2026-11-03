@@ -61,7 +61,7 @@ Süper admin tenant verisine otomatik erişmez (`Gate::before` bypass yok); mü�
 | Hukuki dayanak | Randevu oluşturma ve operasyonel bildirimler: **sözleşmenin ifası (m.5/2-c)**; güvenlik/denetim kayıtları: meşru menfaat / hukuki yükümlülük | Her ileti türü için dayanak — operasyonel bildirim için **açık rıza genellemesi yapılmadı** |
 | WhatsApp bildirim izni | Rezervasyonda ayrı onay kutusu, kanıtıyla saklanır (`communication_consents`) | Meta politikası gereği opt-in; KVKK açısından ayrı rıza gerekip gerekmediği |
 | Ticari elektronik ileti | Ayrı, varsayılan kapalı onay; `marketing` kategorisi ayrı; bu sürümde kampanya gönderimi yok | 6563 sayılı Kanun, **İYS kaydı** ve ret hakkı |
-| Yurt dışına aktarım | Meta (WhatsApp), e-posta/SMS sağlayıcıları yurt dışında olabilir | KVKK m.9 (2024 değişikliği) kapsamında dayanak (standart sözleşme vb.) ve **alt işleyen listesi** |
+| Yurt dışına aktarım | Meta (WhatsApp) ve e-posta sağlayıcıları yurt dışında olabilir | KVKK m.9 (2024 değişikliği) kapsamında dayanak (standart sözleşme vb.) ve **alt işleyen listesi** |
 | Veri sahibi hakları | Hesapta JSON veri indirme; export/delete/rectify talepleri `data_subject_requests` ile admin'e (30 gün) | Başvuru usulü, kimlik doğrulama, yanıt süresi |
 | Saklama | Webhook 30 gün, mesaj alıcısı 180 gün sonra maskeleme, OTP 7 gün, token'lar süresi + 30 gün | Randevu/fatura kayıtları için yasal saklama süreleri (VUK vb.) ve imha politikası |
 | Minimizasyon | Yorumlarda "Ad S." gösterimi; buton payload'larında PII yok; loglarda maskeli numara | — |

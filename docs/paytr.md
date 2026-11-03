@@ -1,8 +1,8 @@
-# PayTR (abonelik ödemesi) ve Netgsm (SMS) kurulumu
+# PayTR (abonelik ödemesi) kurulumu
 
-Bu iki entegrasyon yalnızca **salon sahiplerinin platforma ödediği abonelik** ve **telefon doğrulama SMS'leri** içindir. Müşterilerden randevu için online ödeme/kapora alınmaz (ADR-010).
+Bu entegrasyon yalnızca **salon sahiplerinin platforma ödediği abonelik** içindir. (SMS kullanılmaz; telefon doğrulama kodları WhatsApp ile gider — [whatsapp.md](whatsapp.md#telefon-doğrulama-kodu).) Müşterilerden randevu için online ödeme/kapora alınmaz (ADR-010).
 
-Varsayılan ayarlarla ikisi de **kapalıdır** (`SUBSCRIPTION_PAYMENT_PROVIDER=manual`, `SMS_PROVIDER=log`). Açmak için yalnızca `.env` değişir; kod değişmez.
+Varsayılan ayarlarla **kapalıdır** (`SUBSCRIPTION_PAYMENT_PROVIDER=manual`). Açmak için yalnızca `.env` değişir; kod değişmez.
 
 ---
 
@@ -47,35 +47,3 @@ Sonra: `php artisan optimize:clear && php artisan optimize && php artisan migrat
 > **Doğrulama notu:** İstek imzası (`paytr_token`) PayTR'ın resmî iFrame API PHP örneğindeki alan sırasıyla oluşturulur: `merchant_id + user_ip + merchant_oid + email + payment_amount + user_basket + no_installment + max_installment + currency + test_mode`, ardından `merchant_salt` eklenip `merchant_key` ile HMAC-SHA256 ve base64. Geliştirme ortamından dev.paytr.com'a erişilemediği için bu sıra resmî dokümanla canlı olarak karşılaştırılamadı; **ilk test ödemesi bunu doğrular** (yanlışsa PayTR `paytr_token` hatası döner ve log'a yazılır).
 
 ---
-
-## 2. Netgsm — SMS (telefon doğrulama kodları)
-
-### Netgsm panelinde
-1. **Abonelik Bilgileri > API İşlemleri**: API kullanıcısı oluşturun (ana hesap yerine **alt kullanıcı** önerilir) ve API erişimini açın.
-2. **IP kısıtlaması** kullanıyorsanız sunucunuzun çıkış IP'sini ekleyin (aksi halde kod `30` döner).
-3. **Mesaj başlığı** (gönderici adı) onaylı olmalı, ör. `KUAFORRNDV`.
-4. (İsteğe bağlı) Doğrulama kodları için **OTP SMS paketi**: daha hızlı teslim; Türkçe karakterler otomatik sadeleştirilir.
-
-### `.env`
-```dotenv
-SMS_PROVIDER=netgsm
-NETGSM_USERCODE=850xxxxxxx
-NETGSM_PASSWORD=********
-NETGSM_MSGHEADER=KUAFORRNDV
-NETGSM_OTP=false   # OTP paketi aldıysanız true
-```
-Kontrol: `php artisan kuafor:check` → "Netgsm bilgileri tanımlı" ✓. Sonra **Hesabım > Telefon doğrulama** ile kendi numaranıza kod isteyin.
-
-### Hata kodları (log'da `[sms:netgsm] rejected`)
-| Kod | Anlamı | Çözüm |
-|---|---|---|
-| 20 | Mesaj metni hatalı/uzun | — |
-| 30 | Kullanıcı/şifre hatalı, API yetkisi yok veya IP kısıtı | Panelde API yetkisi ve IP listesi |
-| 40 / 41 | Mesaj başlığı tanımlı değil / geçersiz | `NETGSM_MSGHEADER` onaylı başlıkla aynı olmalı |
-| 60 | OTP paketi/kredisi yok | `NETGSM_OTP=false` veya paket alın |
-| 70 | Eksik/hatalı parametre | — |
-| 80 / 85 | Gönderim sınırı / aynı numaraya tekrar sınırı | Bekleyin |
-
-Kullanıcıya yalnızca "SMS gönderilemedi, lütfen tekrar deneyin" gösterilir; ayrıntı log'dadır (telefon numarası maskelenir).
-
-Bu SMS'ler **bilgilendirme** (doğrulama kodu) niteliğindedir, ticari ileti değildir; İYS filtresi uygulanmaz. Kampanya/pazarlama SMS'i eklenirse İYS onayı ayrıca ele alınmalıdır.

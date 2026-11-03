@@ -3,7 +3,7 @@
 namespace App\Services\WhatsApp;
 
 /**
- * Platform template definitions (category UTILITY). These must be submitted to
+ * Platform template definitions (category UTILITY, except the AUTHENTICATION one-time code). These must be submitted to
  * and APPROVED by Meta under each WABA before production use; the seeder
  * creates them with approval_status=PENDING (APPROVED in fake/sandbox mode).
  *
@@ -68,6 +68,14 @@ final class TemplateCatalog
             'body' => '{{1}} şubesi: {{2}} ({{3}}).',
             'buttons' => [],
         ],
+        // Phone verification codes (there is no SMS channel). Meta AUTHENTICATION category: the body text is
+        // fixed by Meta ("{{1}} doğrulama kodunuzdur..."), with a "Kodu kopyala" (copy code) button.
+        'otp_code' => [
+            'name' => 'dogrulama_kodu',
+            'category' => 'AUTHENTICATION',
+            'body' => '{{1}} doğrulama kodunuzdur. Güvenliğiniz için bu kodu kimseyle paylaşmayın.',
+            'buttons' => [],
+        ],
     ];
 
     public static function get(string $key): array
@@ -84,6 +92,15 @@ final class TemplateCatalog
         }
 
         return $body;
+    }
+
+    /** Authentication template: the code goes into the body and the copy-code (URL-type) button. */
+    public static function otpComponents(string $code): array
+    {
+        return [
+            ['type' => 'body', 'parameters' => [['type' => 'text', 'text' => $code]]],
+            ['type' => 'button', 'sub_type' => 'url', 'index' => '0', 'parameters' => [['type' => 'text', 'text' => $code]]],
+        ];
     }
 
     /** Meta "components" for a template with text params and quick-reply payloads. */

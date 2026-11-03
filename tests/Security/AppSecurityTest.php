@@ -18,11 +18,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\ActsInTenant;
 use Tests\Support\BuildsSalon;
+use Tests\Support\WhatsAppOtp;
 use Tests\TestCase;
 
 class AppSecurityTest extends TestCase
 {
-    use ActsInTenant, BuildsSalon;
+    use ActsInTenant, BuildsSalon, WhatsAppOtp;
 
     public function test_stored_xss_is_escaped_on_public_pages(): void
     {
@@ -79,6 +80,7 @@ class AppSecurityTest extends TestCase
 
     public function test_otp_brute_force_is_locked_and_sends_are_rate_limited(): void
     {
+        $this->connectPlatformWhatsApp();
         $otp = app(PhoneVerificationService::class);
         $otp->send('+905551112233', 'booking');
         for ($i = 0; $i < 5; $i++) {

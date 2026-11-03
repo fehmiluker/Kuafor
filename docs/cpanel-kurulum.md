@@ -2,7 +2,7 @@
 
 Bu rehber, Kuaför Randevu uygulamasını **SSH ve Terminal destekli bir cPanel hosting** üzerinde online **demo/test** amacıyla kurmak içindir. Gerçek salonlarla canlı kullanım için VPS önerilir (bkz. [Bölüm 10](#10-cpanel-yeterli-mi-vps-ne-zaman-gerekir)).
 
-> Bu ayarlarla **gerçek WhatsApp mesajı, gerçek ödeme, gerçek e-posta ve SMS gönderilmez.**
+> Bu ayarlarla **gerçek WhatsApp mesajı, gerçek ödeme ve gerçek e-posta gönderilmez** (SMS hiç kullanılmaz).
 > Rehberdeki örneklerde `KULLANICI` = cPanel kullanıcı adınız, `demo.alanadiniz.com` = demo adresiniz.
 
 ---
@@ -128,7 +128,6 @@ Kaydetmek için `Ctrl+O`, `Enter`, çıkmak için `Ctrl+X`.
 | `SUBSCRIPTION_PAYMENT_PROVIDER` | `manual` | **Gerçek ödeme yok**; abonelik admin panelinden elle aktifleşir |
 | `SUBSCRIPTION_WEBHOOK_SECRET` | boş | Ödeme bildirim adresi tüm istekleri reddeder |
 | `MAIL_MAILER` | `log` | E-posta gönderilmez, içerik `storage/logs` içine yazılır |
-| `SMS_PROVIDER` | `log` | SMS gönderilmez, doğrulama kodları log dosyasına yazılır |
 
 > `.env` dosyası `.gitignore` içindedir ve **asla GitHub'a gönderilmez.** Sunucudan başka bir yere kopyalamayın.
 
@@ -255,7 +254,7 @@ php84 artisan platform:create-admin sizin@epostaniz.com   # admin'i tekrar oluş
 # Sadece demo salonlarını ekle (tablolar zaten varsa)
 php84 artisan db:seed --class=DemoSeeder --force
 
-# Gönderilmeyen e-posta / SMS kodlarını görmek (demo'da log'a yazılır)
+# Gönderilmeyen e-postaları ve WhatsApp doğrulama kodlarını görmek (demo'da log'a yazılır, "[otp:fake]")
 tail -n 50 storage/logs/laravel-$(date +%Y-%m-%d).log
 ```
 
@@ -324,7 +323,7 @@ Kurulumdan sonra sırayla işaretleyin. Telefondan (mobil) ve bilgisayardan dene
 
 ### F. Demo güvenliği
 - [ ] `kuafor:check --demo` çıktısında: "WhatsApp: kapalı / sandbox", "Ödeme: gerçek ödeme yok"
-- [ ] Hiçbir test telefonuna gerçek WhatsApp/SMS gelmedi, hiçbir e-posta adresine mail gelmedi
+- [ ] Hiçbir test telefonuna gerçek WhatsApp mesajı gelmedi, hiçbir e-posta adresine mail gelmedi
 - [ ] (Önerilen) Directory Privacy ile demo şifre korumalı
 
 ---

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\QueueHeartbeat;
+use App\Services\Auth\WhatsAppOtpSender;
 use App\Services\Billing\PaymentGatewayInterface;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
@@ -130,21 +131,21 @@ class DeploymentCheck extends Command
             $realPayment => '<fg=yellow>ödeme bildirim adresi AÇIK</>',
             default => 'gerçek ödeme yok, bildirim adresi kapalı',
         });
-        $this->line('  E-posta: '.config('mail.default').' · SMS: '.config('sms.provider'));
+        $this->line('  E-posta: '.config('mail.default'));
+        // Phone verification (home visits, salons that require it) only works over WhatsApp: there is no SMS.
+        app(WhatsAppOtpSender::class)->available()
+            ? $this->ok('Telefon doğrulama: WhatsApp (platform numarası + "dogrulama_kodu" şablonu hazır)')
+            : $this->softWarn('Telefon doğrulama kapalı: platform WhatsApp numarası bağlı değil veya "dogrulama_kodu" şablonu Meta\'da onaylanmadı. Adrese hizmet randevusu yalnızca telefonu doğrulanmış üyeler alabilir.');
         if ($paymentProvider === 'paytr') {
             $this->check(filled(config('subscriptions.paytr.merchant_id')) && filled(config('subscriptions.paytr.merchant_key')) && filled(config('subscriptions.paytr.merchant_salt')),
                 'PayTR mağaza bilgileri tanımlı', '.env: PAYTR_MERCHANT_ID, PAYTR_MERCHANT_KEY, PAYTR_MERCHANT_SALT (PayTR Mağaza Paneli > Bilgi).');
             $this->line('  PayTR Bildirim URL: '.url('/webhooks/subscription-payments/paytr'));
         }
-        if (config('sms.provider') === 'netgsm') {
-            $this->check(filled(config('sms.netgsm.usercode')) && filled(config('sms.netgsm.password')) && filled(config('sms.netgsm.header')),
-                'Netgsm bilgileri tanımlı', '.env: NETGSM_USERCODE, NETGSM_PASSWORD, NETGSM_MSGHEADER.');
-        }
         if ($this->option('demo')) {
             $this->check(! $realWhatsApp, 'Demo: WhatsApp gerçek mesaj göndermiyor', 'Demo için .env: WHATSAPP_PROVIDER_MODE=fake');
             $this->check(blank(config('whatsapp.app_secret')) && blank(config('whatsapp.verify_token')), 'Demo: Meta anahtarları boş', 'Demo için META_APP_SECRET ve META_VERIFY_TOKEN boş bırakılmalı.');
             $this->check(! $realPayment || ($paymentProvider === 'paytr' && config('subscriptions.paytr.test_mode')), 'Demo: gerçek ödeme kapalı', 'Demo için SUBSCRIPTION_PAYMENT_PROVIDER=manual (veya paytr + PAYTR_TEST_MODE=true) ve SUBSCRIPTION_WEBHOOK_SECRET boş olmalı.');
-            $this->check(config('mail.default') === 'log' && config('sms.provider') === 'log', 'Demo: e-posta ve SMS dışarı gönderilmiyor', 'Demo için MAIL_MAILER=log ve SMS_PROVIDER=log önerilir.');
+            $this->check(config('mail.default') === 'log', 'Demo: e-posta dışarı gönderilmiyor', 'Demo için MAIL_MAILER=log önerilir.');
             $this->check(! app()->environment('production'), 'Demo: APP_ENV production değil', 'Demo verisi için APP_ENV=staging kullanın.');
         }
 

@@ -11,7 +11,7 @@
 #   DEMO_PASS  Siteyi şifreyle korur (kullanıcı adı: DEMO_USER, varsayılan "demo"). Önerilir: demo şifreleri README'de açık.
 #   BRANCH     GitHub dalı (varsayılan main).
 #
-# Gerçek WhatsApp/ödeme/SMS/e-posta KAPALIDIR (.env.demo.example). Tekrar çalıştırmak güvenlidir:
+# Gerçek WhatsApp/ödeme/e-posta KAPALIDIR (.env.demo.example). Tekrar çalıştırmak güvenlidir:
 # mevcut kurulumda kod ve veritabanı korunur, yalnızca eksik adımlar tamamlanır.
 set -euo pipefail
 
@@ -136,7 +136,7 @@ fi
 APP_URL="${SCHEME}://${HOST}"
 
 if [ ! -f .env ]; then
-  say ".env (demo ayarları: gerçek WhatsApp/ödeme/SMS/e-posta kapalı)"
+  say ".env (demo ayarları: gerçek WhatsApp/ödeme/e-posta kapalı)"
   cp .env.demo.example .env
   sed -i \
     -e "s#^APP_URL=.*#APP_URL=${APP_URL}#" \

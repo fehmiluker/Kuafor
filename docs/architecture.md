@@ -13,7 +13,7 @@ Tarayıcı / Mobil / API istemcisi
         │                 │
         │       Worker'lar: notifications, webhooks, default
         │                 │
-        └──── Meta WhatsApp Cloud API · SMTP · SMS sağlayıcı
+        └──── Meta WhatsApp Cloud API · SMTP
 ```
 
 ## Katmanlar

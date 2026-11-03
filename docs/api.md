@@ -134,7 +134,7 @@ Başlık `X-Proposal-Token` (teklif e-postası/sayfasındaki tek amaçlı token)
 ### `POST /auth/logout` · `POST /auth/forgot-password` (her zaman 200)
 
 ### `POST /auth/verify-phone`
-Gövdesiz → SMS kodu gönderir. `{"code":"123456"}` → doğrular ve aynı numarayla alınmış geçmiş misafir randevularını hesaba bağlar (`data.linked_bookings`).
+Gövdesiz → doğrulama kodunu WhatsApp ile gönderir (platform numarası, `dogrulama_kodu` şablonu; SMS yoktur). `{"code":"123456"}` → doğrular ve aynı numarayla alınmış geçmiş misafir randevularını hesaba bağlar (`data.linked_bookings`).
 
 ### `GET /me` · `PATCH /me`
 `PATCH` gövdesi: `name`, `locale`, `notification_preferences: [{"channel":"whatsapp","category":"reminder","enabled":false}]`.

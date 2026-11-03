@@ -1,6 +1,6 @@
 # VPS kurulum rehberi (Hostinger VPS — demo)
 
-Bu rehber uygulamayı **Hostinger VPS** (veya herhangi bir Ubuntu 22.04/24.04 sunucu) üzerine **tek komutla demo olarak** kurar. Gerçek WhatsApp, ödeme, SMS ve e-posta **kapalıdır**; demo salonlar ve hesaplar yüklenir.
+Bu rehber uygulamayı **Hostinger VPS** (veya herhangi bir Ubuntu 22.04/24.04 sunucu) üzerine **tek komutla demo olarak** kurar. Gerçek WhatsApp, ödeme ve e-posta **kapalıdır**; demo salonlar ve hesaplar yüklenir.
 
 Betik şunları kurar ve ayarlar: Nginx, PHP 8.4 (FPM), MySQL 8, Composer, kuyruk işçisi (Supervisor), zamanlayıcı (cron), güvenlik duvarı (ufw), isteğe bağlı HTTPS (Let's Encrypt) ve site şifresi.
 
@@ -63,4 +63,4 @@ Bakım modunu açar, kodu çeker, paketleri ve veritabanı değişikliklerini uy
 | Site şifresini değiştirmek | `htpasswd -b /etc/nginx/kuafor.htpasswd demo 'YeniSifre' && systemctl reload nginx` |
 
 ## Canlıya geçiş (gerçek salonlar)
-Demo yerine gerçek kullanım için `.env`'de `APP_ENV=production`, gerçek e-posta (SMTP), PayTR/Netgsm ([paytr-netgsm.md](paytr-netgsm.md)), WhatsApp ([whatsapp.md](whatsapp.md)) ve yedekleme ([deployment.md](deployment.md#yedekleme-ve-geri-yükleme)) ayarlanmalıdır. `APP_ENV=production` iken demo verisi oluşturulmaz.
+Demo yerine gerçek kullanım için `.env`'de `APP_ENV=production`, gerçek e-posta (SMTP), PayTR ([paytr.md](paytr.md)), WhatsApp ([whatsapp.md](whatsapp.md)) ve yedekleme ([deployment.md](deployment.md#yedekleme-ve-geri-yükleme)) ayarlanmalıdır. `APP_ENV=production` iken demo verisi oluşturulmaz.

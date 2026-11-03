@@ -68,6 +68,17 @@ Bir numara kendine mesaj gönderemez / kendi butonlarını alamaz. Bu yüzden **
 - Serbest metin/etkileşimli mesaj yalnızca kişinin son gelen mesajından sonraki 24 saat içinde gönderilir (`WhatsAppSender::insideServiceWindow`); dışarıdaysa gönderilmez.
 - Müşteriye WhatsApp yalnızca rezervasyonda alınan **WhatsApp bildirim izni** varsa gönderilir (`communication_consents`); pazarlama ayrı izin ve ayrı kategori (bu sürümde kampanya gönderimi yok).
 
+## Telefon doğrulama kodu
+
+SMS kullanılmaz. Doğrulama kodları (adrese hizmet randevusu, salonun "telefon doğrulaması iste" ayarı, Hesabım > telefon doğrulama) **platform numarasından** gönderilir:
+
+1. Admin > Sistem'den platform WhatsApp numarasını bağlayın.
+2. WhatsApp Manager'da **Authentication** kategorisinde `dogrulama_kodu` adlı, dili Türkçe (`tr`) şablon oluşturun; "Kodu kopyala" (copy code) düğmesini seçin. Metni Meta belirler ("{{1}} doğrulama kodunuzdur...").
+3. Onaylanınca `whatsapp_templates` tablosunda `key=otp_code` satırını `approval_status=APPROVED` yapın.
+4. `php artisan kuafor:check` "Telefon doğrulama: WhatsApp ... hazır" göstermelidir.
+
+Kod 10 dakika geçerli, 5 hatalı denemede kilitlenir; numara başına saatte 5, IP başına 20 gönderim. Kod veritabanında yalnızca HMAC olarak tutulur, mesaj kaydına yazılmaz. Platform numarası/şablon hazır değilse doğrulama isteyen akışlar "WhatsApp ile doğrulama şu anda kullanılamıyor" der; telefonu doğrulanmış üyeler etkilenmez. Fake modda kod gönderilmez, `[otp:fake]` ile log'a yazılır.
+
 ## Webhook
 - `GET /webhooks/meta/whatsapp`: `hub.verify_token` = `META_VERIFY_TOKEN` ise challenge.
 - `POST /webhooks/meta/whatsapp`: imza → JSON → olay başına `provider_event_key` (`msg:{wamid}`, `status:{wamid}:{status}:{ts}`) → tekrarlar atılır → kuyruk → `200`. Gelen mesajlar `whatsapp_messages.provider_message_id` UNIQUE ile ikinci kez işlenmez.

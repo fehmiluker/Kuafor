@@ -45,6 +45,5 @@
         <env name="META_APP_SECRET" value="test-app-secret"/>
         <env name="META_VERIFY_TOKEN" value="test-verify-token"/>
         <env name="SUBSCRIPTION_WEBHOOK_SECRET" value="test-billing-secret"/>
-        <env name="SMS_PROVIDER" value="log"/>
     </php>
 </phpunit>

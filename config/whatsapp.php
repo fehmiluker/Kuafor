@@ -5,6 +5,11 @@ return [
     // meta: official Meta WhatsApp Business Platform Cloud API.
     'mode' => env('WHATSAPP_PROVIDER_MODE', 'fake'),
 
+    // Phone verification codes are sent from the platform number (template "dogrulama_kodu").
+    'otp_ttl_minutes' => 10,
+    'otp_max_attempts' => 5,
+    'otp_max_sends_per_hour' => 5,
+
     'graph_base_url' => env('META_GRAPH_BASE_URL', 'https://graph.facebook.com'),
     'graph_version' => env('META_GRAPH_API_VERSION', 'v21.0'),
     'app_id' => env('META_APP_ID'),

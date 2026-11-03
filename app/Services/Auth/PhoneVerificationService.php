@@ -4,22 +4,24 @@ namespace App\Services\Auth;
 
 use App\Exceptions\DomainRuleException;
 use App\Models\PhoneVerification;
-use App\Services\Sms\SmsProviderInterface;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
- * 6-digit OTP. Brute-force protection: max attempts per code, max sends per
+ * 6-digit OTP delivered over WhatsApp (WhatsAppOtpSender; there is no SMS). Brute-force protection: max attempts per code, max sends per
  * phone per hour, per-IP limit. Codes are stored as HMAC hashes only.
  */
 final class PhoneVerificationService
 {
-    public function __construct(private readonly SmsProviderInterface $sms) {}
+    public function __construct(private readonly WhatsAppOtpSender $whatsapp) {}
 
     public function send(string $phoneE164, string $purpose, ?int $userId = null, ?string $ip = null): void
     {
+        if (! $this->whatsapp->available()) {
+            throw new DomainRuleException('WhatsApp ile doğrulama şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin veya salonu arayın.', 'otp_unavailable');
+        }
         $phoneKey = 'otp-send:'.sha1($phoneE164);
         $ipKey = 'otp-send-ip:'.sha1((string) $ip);
-        if (RateLimiter::tooManyAttempts($phoneKey, (int) config('sms.otp_max_sends_per_hour')) || RateLimiter::tooManyAttempts($ipKey, 20)) {
+        if (RateLimiter::tooManyAttempts($phoneKey, (int) config('whatsapp.otp_max_sends_per_hour')) || RateLimiter::tooManyAttempts($ipKey, 20)) {
             throw new DomainRuleException('Çok fazla doğrulama kodu istendi. Lütfen daha sonra tekrar deneyin.', 'otp_rate_limited');
         }
         RateLimiter::hit($phoneKey, 3600);
@@ -30,10 +32,10 @@ final class PhoneVerificationService
         PhoneVerification::create([
             'phone_e164' => $phoneE164, 'user_id' => $userId, 'purpose' => $purpose,
             'code_hash' => $this->hash($phoneE164, $code),
-            'expires_at' => now()->addMinutes((int) config('sms.otp_ttl_minutes')),
+            'expires_at' => now()->addMinutes((int) config('whatsapp.otp_ttl_minutes')),
             'ip_hash' => $ip ? hash_hmac('sha256', $ip, (string) config('app.key')) : null,
         ]);
-        $this->sms->send($phoneE164, "Doğrulama kodunuz: {$code}. Kodu kimseyle paylaşmayın.");
+        $this->whatsapp->send($phoneE164, $code);
     }
 
     public function verify(string $phoneE164, string $purpose, string $code): bool
@@ -43,7 +45,7 @@ final class PhoneVerificationService
         if (! $row || $row->expires_at->isPast()) {
             return false;
         }
-        if ($row->attempts >= (int) config('sms.otp_max_attempts')) {
+        if ($row->attempts >= (int) config('whatsapp.otp_max_attempts')) {
             throw new DomainRuleException('Çok fazla hatalı deneme. Lütfen yeni kod isteyin.', 'otp_locked');
         }
         $row->increment('attempts');

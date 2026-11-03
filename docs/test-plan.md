@@ -1,6 +1,6 @@
 # Test planı ve sonuçları
 
-Testler **gerçek MySQL 8** üzerinde çalışır (`kuafor_test`): CHECK kısıtları, bileşik FK'ler ve satır kilitleri testin parçasıdır. Dış sağlayıcılar fake: `FakeWhatsAppClient`, `LogSmsProvider`, `Mail::fake`, `manual` ödeme sağlayıcısı. Gerçek mesaj veya ödeme gönderilmez.
+Testler **gerçek MySQL 8** üzerinde çalışır (`kuafor_test`): CHECK kısıtları, bileşik FK'ler ve satır kilitleri testin parçasıdır. Dış sağlayıcılar fake: `FakeWhatsAppClient` (doğrulama kodları dahil), `Mail::fake`, `manual` ödeme sağlayıcısı. Gerçek mesaj veya ödeme gönderilmez.
 
 ```bash
 php artisan test                         # tümü
@@ -28,7 +28,7 @@ iPhone 13 görünümünde ana sayfa → salon → sihirbaz (şube, hizmet, "fark
 Bkz. README "Test sonuçları".
 
 ## Çalıştırılmayanlar / sınırlar
-- Canlı Meta Cloud API, gerçek SMS ve SMTP ile entegrasyon (kimlik bilgisi yok; fake/sandbox ile test edildi).
+- Canlı Meta Cloud API ve SMTP ile entegrasyon (kimlik bilgisi yok; fake/sandbox ile test edildi).
 - Otomatik WCAG denetimi (axe vb.) çalıştırılmadı; erişilebilirlik manuel kurallarla uygulandı (etiketler, odak, aria, kontrast).
 - Yük/performans testi yapılmadı.
 - PHP 8.4 yerine ortamdaki PHP 8.3.6 ile test edildi.

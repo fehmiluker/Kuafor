@@ -113,7 +113,7 @@ class AccountController extends Controller
         if (empty($data['code'])) {
             $otp->send($user->phone_e164, 'account', $user->id, $request->ip());
 
-            return back()->with('status', 'Doğrulama kodu SMS ile gönderildi.')->with('otp_sent', true);
+            return back()->with('status', 'Doğrulama kodu WhatsApp ile gönderildi.')->with('otp_sent', true);
         }
         if (! $otp->verify($user->phone_e164, 'account', $data['code'])) {
             return back()->withErrors(['code' => 'Kod hatalı veya süresi dolmuş.'])->with('otp_sent', true);

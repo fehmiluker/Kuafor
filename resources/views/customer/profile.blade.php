@@ -26,7 +26,7 @@
                 <p class="text-xs text-slate-500">Doğruladığınızda bu numarayla daha önce aldığınız randevular hesabınıza bağlanır.</p>
                 <form method="POST" action="{{ route('account.phone.verify') }}" class="flex flex-wrap gap-2">@csrf
                     @if(session('otp_sent') || $errors->has('code'))<input name="code" class="input max-w-40" inputmode="numeric" maxlength="6" placeholder="6 haneli kod" aria-label="Doğrulama kodu">@endif
-                    <button class="btn-secondary">{{ session('otp_sent') ? 'Doğrula' : 'Kod gönder' }}</button>
+                    <button class="btn-secondary">{{ session('otp_sent') ? 'Doğrula' : 'WhatsApp ile kod gönder' }}</button>
                 </form>
             @endunless
         </div>

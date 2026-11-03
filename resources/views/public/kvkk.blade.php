@@ -10,7 +10,7 @@
     <p>Ad-soyad, telefon, (varsa) e-posta, randevu tarih/saat ve hizmet bilgileri; randevunun oluşturulması, yönetilmesi, size randevu bildirimlerinin iletilmesi ve hizmetin ifası amacıyla işlenir (KVKK m.5/2-c sözleşmenin ifası). Pazarlama amaçlı ileti yalnızca ayrıca vereceğiniz açık izin/onay ile gönderilir.</p>
     <p class="mt-2">Adrese hizmet (ev/işyeri) randevularında verdiğiniz açık adres yalnızca o randevu için salonun yetkili personeline gösterilir, şifreli saklanır ve randevudan {{ config('booking.home_address_retention_days') }} gün sonra silinir; istatistik için yalnızca ilçe bilgisi tutulur.</p>
     <h2 class="mt-4 font-semibold">Aktarım</h2>
-    <p>Bildirimler için WhatsApp Business Platform (Meta), SMS ve e-posta hizmet sağlayıcıları kullanılabilir; bu sağlayıcıların bir kısmı yurt dışında bulunabilir. Yurt dışı aktarımın hukuki dayanağı hukuk danışmanınızla değerlendirilmelidir.</p>
+    <p>Bildirimler ve telefon doğrulama kodları için WhatsApp Business Platform (Meta) ve e-posta hizmet sağlayıcıları kullanılabilir (SMS kullanılmaz); bu sağlayıcıların bir kısmı yurt dışında bulunabilir. Yurt dışı aktarımın hukuki dayanağı hukuk danışmanınızla değerlendirilmelidir.</p>
     <h2 class="mt-4 font-semibold">Çerezler</h2>
     <p>Yalnızca hizmetin çalışması için gerekli çerezler kullanılır; reklam veya takip çerezi yoktur. Oturum ve güvenlik çerezlerine ek olarak seçtiğiniz konum (<code>konum</code>) ve bu cihazdan son randevu aldığınız salon ile seçtiğiniz hizmet/personel (<code>son_salon</code>, "Tekrar randevu al" için, 1 yıl) tarayıcınızda saklanır. Tarayıcı ayarlarınızdan silebilirsiniz.</p>
     <h2 class="mt-4 font-semibold">Haklarınız</h2>

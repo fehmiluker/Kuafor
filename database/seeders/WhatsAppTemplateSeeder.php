@@ -18,7 +18,7 @@ class WhatsAppTemplateSeeder extends Seeder
         $approved = config('whatsapp.mode') !== 'meta';
         foreach (TemplateCatalog::TEMPLATES as $key => $t) {
             WhatsAppTemplate::updateOrCreate(['tenant_id' => null, 'key' => $key, 'language' => 'tr'], [
-                'name' => $t['name'], 'category' => 'UTILITY',
+                'name' => $t['name'], 'category' => $t['category'] ?? 'UTILITY',
                 'approval_status' => $approved ? 'APPROVED' : 'PENDING',
                 'parameters_schema' => ['body_params' => substr_count($t['body'], '{{'), 'quick_replies' => $t['buttons']],
                 'fallback_body' => $t['body'],
