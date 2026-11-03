@@ -10,6 +10,7 @@
         <p class="text-sm">Durum: <strong>{{ $tenant->status->label() }}</strong> @if($tenant->suspension_reason)— {{ $tenant->suspension_reason }}@endif</p>
         <a href="{{ route('salon.show', $tenant->slug) }}" target="_blank" class="text-sm text-brand-700 hover:underline">Profil sayfası ↗</a>
         @if($canManage)
+        <a class="btn-secondary mt-2" href="{{ route('admin.tenants.profile', $tenant->id) }}">Profil, Görseller ve İletişim</a>
         <form method="POST" action="{{ route('admin.tenants.update', $tenant->id) }}" class="space-y-2 border-t border-slate-100 pt-3">@csrf
             <label class="label" for="t-st">Durum</label><select id="t-st" name="status" class="input">@foreach(\App\Enums\TenantStatus::cases() as $s)<option value="{{ $s->value }}" @selected($tenant->status === $s)>{{ $s->label() }}</option>@endforeach</select>
             <label class="flex items-center gap-2 text-sm"><input type="hidden" name="public_listing_enabled" value="0"><input type="checkbox" name="public_listing_enabled" value="1" @checked($tenant->public_listing_enabled)> Aramada listelensin</label>

@@ -13,6 +13,7 @@ use App\Models\ServiceCategory;
 use App\Notifications\SalonApplicationRejected;
 use App\Rules\Phone;
 use App\Services\Audit\AuditLogger;
+use App\Services\Catalog\SalonProfileService;
 use App\Services\Onboarding\SalonCsvImporter;
 use App\Services\Onboarding\SalonOnboardingService;
 use App\Services\Settings\SettingsRepository;
@@ -54,7 +55,7 @@ class AdminOnboardingController extends Controller
         ]);
     }
 
-    public function createSalon(Request $request, SalonOnboardingService $onboarding): RedirectResponse
+    public function createSalon(Request $request, SalonOnboardingService $onboarding, SalonProfileService $profiles): RedirectResponse
     {
         $this->need($request);
         $d = $request->validate([
@@ -66,6 +67,8 @@ class AdminOnboardingController extends Controller
             'category' => ['nullable', Rule::exists('service_categories', 'slug')->whereNull('tenant_id')->where('status', 'active')],
             'services' => ['nullable', 'string', 'max:5000'], 'employees' => ['nullable', 'string', 'max:2000'],
             'invite' => ['nullable', 'boolean'],
+            'contact_phone' => ['nullable', new Phone],
+            ...SalonProfileService::rules(),
         ]);
         [$services, $errors] = SalonCsvImporter::parseServices((string) ($d['services'] ?? ''));
         if ($errors) {
@@ -74,10 +77,20 @@ class AdminOnboardingController extends Controller
         if (! empty($d['category'])) {
             $services = array_map(fn ($s) => array_replace($s, ['category' => $d['category']]), $services);
         }
+        $d['owner_phone'] ??= null;
         $d['services'] = $services;
         $d['employees'] = array_values(array_filter(array_map(fn ($n) => Str::limit(trim($n), 60, ''), preg_split('/[|\r\n]+/', (string) ($d['employees'] ?? '')) ?: [])));
-        ['tenant' => $tenant, 'user' => $user] = $onboarding->create($d, 'admin');
-        $this->audit->log('admin.salon_created', $tenant, [], ['name' => $tenant->name], tenantId: $tenant->id);
+        ['tenant' => $tenant, 'user' => $user] = DB::transaction(function () use ($d, $onboarding, $profiles) {
+            $result = $onboarding->create($d, 'admin');
+            $tenant = $result['tenant'];
+            if (! empty($d['contact_phone'])) {
+                $tenant->branches()->orderBy('id')->first()?->forceFill(['phone' => $d['contact_phone']])->save();
+            }
+            $this->audit->log('admin.salon_created', $tenant, [], ['name' => $tenant->name], tenantId: $tenant->id);
+            $profiles->save($tenant, $d);
+
+            return $result;
+        });
         if ($request->boolean('invite')) {
             $onboarding->invite($user, $tenant);
         }
