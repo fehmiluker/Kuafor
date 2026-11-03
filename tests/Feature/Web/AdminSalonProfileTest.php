@@ -103,9 +103,10 @@ class AdminSalonProfileTest extends TestCase
         $tenant = new Tenant;
         $tenant->settings = ['public_contact' => ['instagram_url' => 'javascript:alert(1)', 'facebook_url' => 'https://evil.test', 'whatsapp_phone' => 'bad']];
         $this->assertSame(['whatsapp' => null, 'instagram' => null, 'facebook' => null], SalonProfileService::links($tenant));
-        $this->asAdminWeb()->get('/admin/icerik/banner')->assertOk()
+        $response = $this->asAdminWeb()->get('/admin/icerik/banner')->assertOk()
             ->assertSeeText('İşletmeler')->assertSeeText('Abonelik ve Ödeme')
             ->assertSeeText('İçerik Yönetimi')->assertSeeText('Ayarlar')
-            ->assertSee('aria-current="page">Bannerlar', false);
+            ->assertSee('aria-current="page"', false);
+        $this->assertMatchesRegularExpression('~href="[^"]*/admin/icerik/banner"[^>]*aria-current="page"[^>]*>Bannerlar</a>~', $response->getContent());
     }
 }
